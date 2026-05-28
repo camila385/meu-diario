@@ -34,12 +34,11 @@ export async function createNote(req: Request, res: Response, next: NextFunction
  */
 export async function listNotes(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // TODO: Implement orchestration
-    // 1. Extract userId from req.userId
-    // 2. Extract query as ListNotesQuery (validated by validate middleware)
-    // 3. Call notesService.listNotes(userId, query)
-    // 4. sendPaginated(res, notes, meta)
-    throw new Error('Not implemented')
+    // T023: Extract userId and validated query, call service, return paginated response
+    const userId = req.userId! // Set by authenticate middleware
+    const query = req.query as unknown as ListNotesQuery // Validated by validate middleware
+    const { summaries, meta } = await notesService.listNotes(userId, query)
+    sendSuccess(res, summaries, 200, meta)
   } catch (error) {
     next(error)
   }

@@ -2,7 +2,7 @@ import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/val
 import { AppError, NotFoundError, ForbiddenError } from '@/errors'
 import notesRepository from '@/repositories/notes.repository'
 import { gamificationRepository } from '@/repositories/gamification.repository'
-import { toNoteDetail } from '@/models/note.model'
+import { toNoteDetail, toNoteSummary } from '@/models/note.model'
 
 // T011: Notes Service Scaffolding
 // Services contain business logic, no req/res, no Prisma access (P-07, P-03 compliance)
@@ -29,17 +29,25 @@ import { toNoteDetail } from '@/models/note.model'
 @@}
 
 /**
- * List notes for user with pagination and filters
+ * T022: List notes for user with pagination and filters
  * - Apply pagination (page, limit)
  * - Apply filters: tag, mood, date range, keyword search
  * - Sort by createdAt descending
- * Returns summaries only (not full content)
+ * Returns summaries only (not full content) with pagination metadata
  */
 export async function listNotes(userId: string, query: ListNotesQuery) {
-  // TODO: Implement list logic
-  // 1. Call notesRepository.listNotes(userId, query)
-  // 2. Return result with pagination metadata (page, limit, total)
-  throw new Error('Not implemented')
+  const { notes, total } = await notesRepository.listNotes(userId, query)
+
+  // Map notes to summary DTO (excerpt, no full content)
+  const summaries = notes.map(toNoteSummary)
+
+  const meta = {
+    page: query.page,
+    limit: query.limit,
+    total,
+  }
+
+  return { summaries, meta }
 }
 
 /**

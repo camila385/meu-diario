@@ -134,9 +134,9 @@ export async function clearNoteTags(noteId: string): Promise<void> {
 }
 
 /**
- * List notes for the authenticated user with pagination and filters
+ * T021: List notes for the authenticated user with pagination and filters
  * - Pagination: page, limit from ListNotesQuery
- * - Filters: tag, mood, search (keyword), dateFrom/dateTo
+ * - Filters: tag, mood, search (keyword), dateFrom/dateTo (ISO date/time, inclusive)
  * - Sort: descending by createdAt
  * Returns paginated summary records with total count
  */
@@ -144,12 +144,67 @@ export async function listNotes(
   userId: string,
   query: ListNotesQuery
 ): Promise<{ notes: Note[]; total: number }> {
-  // TODO: Implement list with filters/pagination
-  // 1. Parse query parameters
-  // 2. Build WHERE clause with filters
-  // 3. Execute paginated query
-  // 4. Return notes + total count
-  throw new Error('Not implemented')
+  // Build WHERE clause with filters
+  const where = {
+    userId,
+    ...(query.tag && {
+      noteTags: {
+        some: {
+          tag: { name: query.tag },
+        },
+      },
+    }),
+    ...(query.mood && {
+      mood: { value: query.mood },
+    }),
+    ...(query.search && {
+      OR: [
+        { title: { contains: query.search, mode: 'insensitive' as const } },
+        { content: { contains: query.search, mode: 'insensitive' as const } },
+      ],
+    }),
+    ...(query.dateFrom &&
+      query.dateTo && {
+      createdAt: {
+        gte: new Date(query.dateFrom),
+        lte: new Date(query.dateTo),
+      },
+    }),
+    ...(query.dateFrom &&
+      !query.dateTo && {
+      createdAt: { gte: new Date(query.dateFrom) },
+    }),
+    ...(!query.dateFrom &&
+      query.dateTo && {
+      createdAt: { lte: new Date(query.dateTo) },
+    }),
+  }
+
+  // Count total matching records
+  const total = await prisma.note.count({ where })
+
+  // Fetch paginated results
+  const skip = (query.page - 1) * query.limit
+  const notes = await prisma.note.findMany({
+    where,
+    select: {
+      id: true,
+      userId: true,
+      title: true,
+      content: true,
+      isPublic: true,
+      createdAt: true,
+      updatedAt: true,
+      noteTags: { include: { tag: true } },
+      mood: true,
+      user: { select: { id: true, username: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    skip,
+    take: query.limit,
+  })
+
+  return { notes, total }
 }
 
 /**

@@ -108,9 +108,140 @@ const router = Router()
 // T019: Route already registered with authenticate + validate middleware
 router.post('/', authenticate, validate(createNoteSchema), notesController.createNote)
 
-// TODO: T024 - Add Swagger @swagger annotations and implement
+// TODO: T030 - Add Swagger @swagger annotations and implement
 /**
- * GET /api/v1/notes - List user's notes with pagination and filters
+ @swagger
+ /api/v1/notes:
+   get:
+     tags:
+       - Notes
+     summary: List user's notes with pagination and filters
+     description: Retrieve paginated list of notes for the authenticated user. Supports filtering by tag, mood, date range, and keyword search. Notes are returned as summaries (with excerpt, not full content) sorted by creation date (newest first).
+     security:
+       - bearerAuth: []
+     parameters:
+       - name: page
+         in: query
+         schema:
+           type: integer
+           minimum: 1
+           default: 1
+         description: Page number for pagination (1-indexed)
+       - name: limit
+         in: query
+         schema:
+           type: integer
+           minimum: 1
+           maximum: 100
+           default: 20
+         description: Number of notes per page (max 100)
+       - name: tag
+         in: query
+         schema:
+           type: string
+         description: Filter by single tag name (case-sensitive)
+       - name: mood
+         in: query
+         schema:
+           type: integer
+           minimum: 1
+           maximum: 5
+         description: Filter by mood value (1-5)
+       - name: search
+         in: query
+         schema:
+           type: string
+           maxLength: 200
+         description: Search keyword in note title and content (case-insensitive)
+       - name: dateFrom
+         in: query
+         schema:
+           type: string
+           format: date-time
+         description: Filter notes created on or after this ISO datetime (inclusive)
+       - name: dateTo
+         in: query
+         schema:
+           type: string
+           format: date-time
+         description: Filter notes created on or before this ISO datetime (inclusive)
+     responses:
+       "200":
+         description: Notes retrieved successfully with pagination metadata
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 success:
+                   type: boolean
+                   example: true
+                 data:
+                   type: array
+                   items:
+                     type: object
+                     properties:
+                       id:
+                         type: string
+                         format: uuid
+                       title:
+                         type: string
+                         maxLength: 200
+                       excerpt:
+                         type: string
+                         maxLength: 150
+                         description: First 150 chars of content or full content if shorter
+                       tags:
+                         type: array
+                         items:
+                           type: object
+                           properties:
+                             id:
+                               type: string
+                               format: uuid
+                             name:
+                               type: string
+                               maxLength: 50
+                       mood:
+                         type: object
+                         properties:
+                           value:
+                             type: integer
+                             minimum: 1
+                             maximum: 5
+                           date:
+                             type: string
+                             format: date-time
+                       isPublic:
+                         type: boolean
+                       createdAt:
+                         type: string
+                         format: date-time
+                   example:
+                     - id: "uuid-1"
+                       title: "Meu dia produtivo"
+                       excerpt: "Hoje foi um dia muito bom, consegui terminar todos os projetos..."
+                       tags: [{ id: "uuid-tag", name: "produtivo" }]
+                       mood: { value: 5, date: "2024-01-15T10:30:00Z" }
+                       isPublic: false
+                       createdAt: "2024-01-15T10:30:00Z"
+                 meta:
+                   type: object
+                   properties:
+                     page:
+                       type: integer
+                       example: 1
+                     limit:
+                       type: integer
+                       example: 20
+                     total:
+                       type: integer
+                       example: 45
+                   description: Pagination metadata (current page, items per page, total count)
+       "400":
+         description: Invalid query parameters (e.g., invalid date format, limit > 100)
+       "401":
+         description: Unauthorized (missing or invalid token)
  */
 router.get('/', authenticate, validate(listNotesQuerySchema), notesController.listNotes)
 
