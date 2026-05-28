@@ -74,13 +74,19 @@ export async function getNote(noteId: string, userId: string) {
  * - Throws 404 if not found or ForbiddenError if not owner
  */
 export async function updateNote(noteId: string, userId: string, input: Partial<UpdateNoteRequest>) {
-  // TODO: Implement update logic with ownership check
-  // 1. Check ownership: call notesRepository.isNoteOwner(noteId, userId)
-  // 2. Throw ForbiddenError if not owner
-  // 3. Call notesRepository.updateNote(noteId, input)
-  // 4. If tags provided, handle tag replacement
-  // 5. Return updated note
-  throw new Error('Not implemented')
+  // T035: Check ownership first
+  const isOwner = await notesRepository.isNoteOwner(noteId, userId)
+  if (!isOwner) {
+    throw new ForbiddenError('Acesso negado. Apenas o proprietário pode editar esta anotação.')
+  }
+
+  // Call updateNote with partial input
+  const note = await notesRepository.updateNote(noteId, input)
+  if (!note) {
+    throw new NotFoundError('Anotação não encontrada.')
+  }
+
+  return toNoteDetail(note)
 }
 
 /**

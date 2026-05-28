@@ -242,12 +242,56 @@ export async function getNoteById(noteId: string, userId: string): Promise<Note 
  * - Update only title, content, tags, mood, isPublic
  */
 export async function updateNote(noteId: string, input: Partial<UpdateNoteRequest>): Promise<Note> {
-  // TODO: Implement partial update
-  // 1. Update note fields
-  // 2. If tags provided, replace all tag links
-  // 3. Update mood if provided
-  // 4. Return updated note with relations
-  throw new Error('Not implemented')
+  // T034: Partial update in transaction
+  return await prisma.$transaction(async (tx) => {
+    // 1. Update note fields (only provided ones)
+    const updateData: any = {}
+    if (input.title !== undefined) updateData.title = input.title
+    if (input.content !== undefined) updateData.content = input.content
+    if (input.isPublic !== undefined) updateData.isPublic = input.isPublic
+
+    const note = await tx.note.update({
+      where: { id: noteId },
+      data: updateData,
+    })
+
+    // 2. Replace tags if provided
+    if (input.tags !== undefined) {
+      // Clear existing tags
+      await tx.noteTag.deleteMany({ where: { noteId } })
+      // Get/create new tags and link them
+      if (input.tags.length > 0) {
+        const tags = await getOrCreateTags(input.tags)
+        await linkTagsToNote(noteId, tags.map((t) => t.id))
+      }
+    }
+
+    // 3. Update or create mood
+    if (input.mood !== undefined) {
+      // Delete existing mood first
+      await tx.mood.deleteMany({ where: { noteId } })
+      // Create new mood if provided
+      if (input.mood) {
+        await tx.mood.create({
+          data: {
+            userId: note.userId,
+            noteId,
+            value: input.mood,
+          },
+        })
+      }
+    }
+
+    // Return updated note with relations
+    return await tx.note.findUniqueOrThrow({
+      where: { id: noteId },
+      include: {
+        user: { select: { id: true, username: true } },
+        noteTags: { include: { tag: true } },
+        mood: true,
+      },
+    })
+  })
 }
 
 /**

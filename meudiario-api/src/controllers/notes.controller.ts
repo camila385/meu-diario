@@ -75,13 +75,12 @@ export async function getNoteById(req: Request, res: Response, next: NextFunctio
  */
 export async function updateNote(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // TODO: Implement orchestration
-    // 1. Extract userId from req.userId
-    // 2. Extract params as NoteIdParam (validated)
-    // 3. Extract body as UpdateNoteRequest (validated, partial)
-    // 4. Call notesService.updateNote(noteId, userId, body)
-    // 5. sendSuccess(res, updatedNote)
-    throw new Error('Not implemented')
+    // T036: Extract userId, note ID, and partial body, call service, return updated note
+    const userId = req.userId!
+    const { id: noteId } = req.params as unknown as NoteIdParam
+    const body = req.body as Partial<UpdateNoteRequest>
+    const updatedNote = await notesService.updateNote(noteId, userId, body)
+    sendSuccess(res, updatedNote, 200)
   } catch (error) {
     next(error)
   }

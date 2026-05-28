@@ -341,9 +341,81 @@ router.get('/', authenticate, validate(listNotesQuerySchema), notesController.li
  */
 router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.getNoteById)
 
-// TODO: T037 - Add Swagger @swagger annotations and implement
+// TODO: T038 - Add Swagger @swagger annotations and implement
 /**
- * PATCH /api/v1/notes/:id - Update a note
+ @swagger
+ /api/v1/notes/{id}:
+   patch:
+     tags:
+       - Notes
+     summary: Update a note (partial update)
+     description: Partially update an existing note. All fields are optional - only provided fields are updated. Tag list is fully replaced when tags are provided (not appended). Ownership required.
+     security:
+       - bearerAuth: []
+     parameters:
+       - name: id
+         in: path
+         required: true
+         schema:
+           type: string
+           format: uuid
+         description: The UUID identifier of the note to update
+     requestBody:
+       required: true
+       content:
+         application/json:
+           schema:
+             type: object
+             properties:
+               title:
+                 type: string
+                 maxLength: 200
+                 description: Note title (optional, only update if provided)
+               content:
+                 type: string
+                 maxLength: 10000
+                 description: Note content (optional)
+               tags:
+                 type: array
+                 maxItems: 10
+                 items:
+                   type: string
+                   maxLength: 50
+                 description: List of tag names (optional, replaces all existing tags)
+               mood:
+                 type: integer
+                 minimum: 1
+                 maximum: 5
+                 description: Mood value on scale 1-5 (optional, can be null to remove)
+               isPublic:
+                 type: boolean
+                 description: Visibility flag (optional)
+             example:
+               title: "Dia atualizado"
+               tags: ["reflexão", "produtivo"]
+               mood: 4
+     responses:
+       "200":
+         description: Note updated successfully
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 success:
+                   type: boolean
+                   example: true
+                 data:
+                   type: object
+                   description: Updated NoteDetail with all fields
+       "400":
+         description: Validation error (invalid fields, constraints violated)
+       "401":
+         description: Unauthorized (missing or invalid token)
+       "403":
+         description: Forbidden (not the owner of the note)
+       "404":
+         description: Note not found
  */
 router.patch('/:id', authenticate, validate(updateNoteSchema), notesController.updateNote)
 
