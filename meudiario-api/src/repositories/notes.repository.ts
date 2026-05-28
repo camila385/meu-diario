@@ -298,9 +298,10 @@ export async function updateNote(noteId: string, input: Partial<UpdateNoteReques
  * Delete a note by ID (permanent removal)
  */
 export async function deleteNote(noteId: string): Promise<void> {
-  // TODO: Implement delete
-  // 1. Delete note record (cascades to NoteTag, Mood via schema)
-  throw new Error('Not implemented')
+  // T040: Delete note (cascades to NoteTag, Mood via schema)
+  await prisma.note.delete({
+    where: { id: noteId },
+  })
 }
 
 /**

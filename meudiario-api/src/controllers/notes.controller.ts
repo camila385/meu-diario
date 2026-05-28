@@ -96,12 +96,11 @@ export async function updateNote(req: Request, res: Response, next: NextFunction
  */
 export async function deleteNote(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // TODO: Implement orchestration
-    // 1. Extract userId from req.userId
-    // 2. Extract params as NoteIdParam (validated)
-    // 3. Call notesService.deleteNote(noteId, userId)
-    // 4. Send 204 response with no body
-    throw new Error('Not implemented')
+    // T042: Extract userId and note ID, call service, return 204 No Content
+    const userId = req.userId!
+    const { id: noteId } = req.params as unknown as NoteIdParam
+    await notesService.deleteNote(noteId, userId)
+    sendSuccess(res, null, 204)
   } catch (error) {
     next(error)
   }

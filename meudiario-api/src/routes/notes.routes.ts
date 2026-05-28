@@ -419,9 +419,34 @@ router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.ge
  */
 router.patch('/:id', authenticate, validate(updateNoteSchema), notesController.updateNote)
 
-// TODO: T043 - Add Swagger @swagger annotations and implement
+// TODO: T044 - Add Swagger @swagger annotations and implement
 /**
- * DELETE /api/v1/notes/:id - Delete a note
+ @swagger
+ /api/v1/notes/{id}:
+   delete:
+     tags:
+       - Notes
+     summary: Delete a note permanently
+     description: Permanently delete an existing note. This action cannot be undone. Cascades to delete all associated NoteTag records and Mood records. Ownership required.
+     security:
+       - bearerAuth: []
+     parameters:
+       - name: id
+         in: path
+         required: true
+         schema:
+           type: string
+           format: uuid
+         description: The UUID identifier of the note to delete
+     responses:
+       "204":
+         description: Note deleted successfully (no content response)
+       "401":
+         description: Unauthorized (missing or invalid token)
+       "403":
+         description: Forbidden (not the owner of the note)
+       "404":
+         description: Note not found
  */
 router.delete('/:id', authenticate, validate(noteIdParamSchema), notesController.deleteNote)
 

@@ -96,11 +96,14 @@ export async function updateNote(noteId: string, userId: string, input: Partial<
  * - Throws 404 or ForbiddenError if denied
  */
 export async function deleteNote(noteId: string, userId: string): Promise<void> {
-  // TODO: Implement delete logic with ownership check
-  // 1. Check ownership: call notesRepository.isNoteOwner(noteId, userId)
-  // 2. Throw ForbiddenError if not owner
-  // 3. Call notesRepository.deleteNote(noteId)
-  throw new Error('Not implemented')
+  // T041: Check ownership first
+  const isOwner = await notesRepository.isNoteOwner(noteId, userId)
+  if (!isOwner) {
+    throw new ForbiddenError('Acesso negado. Apenas o proprietário pode excluir esta anotação.')
+  }
+
+  // Delete note (cascades to tags and mood)
+  await notesRepository.deleteNote(noteId)
 }
 
 export default {
