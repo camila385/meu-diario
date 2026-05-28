@@ -72,7 +72,7 @@ model Mood {
   date   DateTime @default(now())
 
   user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note   Note? @relation(fields: [noteId], references: [id])
+  note   Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
 }
 
 model Gamification {

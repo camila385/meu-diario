@@ -1,0 +1,214 @@
+import { PrismaClient } from '@/generated/prisma'
+import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
+import type { Note, Tag } from '@/models/note.model'
+
+// T008: Notes Repository Scaffolding
+// Single place for Prisma access (P-03, P-12 compliance)
+
+// Initialize Prisma Client
+const prisma = new PrismaClient()
+
+/**
+ * T014: Create a new note for the authenticated user
+ * - Store note with title, content, isPublic
+ * - Create/reuse tags and link to note
+ * - Store optional mood if provided
+ * Returns the created note with relations
+ */
+export async function createNote(userId: string, input: CreateNoteRequest): Promise<Note & {
+  user: { id: string; username: string }
+  noteTags: Array<{ tag: Tag }>
+  mood: any
+}> {
+  // T014: Create note in single transaction
+  return await prisma.$transaction(async (tx) => {
+    // 1. Create note record
+    const note = await tx.note.create({
+      data: {
+        userId,
+        title: input.title,
+        content: input.content || null,
+        isPublic: input.isPublic ?? false,
+      },
+      include: {
+        user: { select: { id: true, username: true } },
+        noteTags: { include: { tag: true } },
+        mood: true,
+      },
+    })
+
+    // 2. Handle tag creation/linking
+    if (input.tags && input.tags.length > 0) {
+      const tags = await getOrCreateTags(input.tags)
+      await linkTagsToNote(note.id, tags.map((t) => t.id))
+      // Re-fetch note with updated tags
+      return await tx.note.findUniqueOrThrow({
+        where: { id: note.id },
+        include: {
+          user: { select: { id: true, username: true } },
+          noteTags: { include: { tag: true } },
+          mood: true,
+        },
+      })
+    }
+
+    // 3. Store optional mood if provided
+    if (input.mood) {
+      await tx.mood.create({
+        data: {
+          userId,
+          noteId: note.id,
+          value: input.mood,
+        },
+      })
+      // Re-fetch note with mood
+      return await tx.note.findUniqueOrThrow({
+        where: { id: note.id },
+        include: {
+          user: { select: { id: true, username: true } },
+          noteTags: { include: { tag: true } },
+          mood: true,
+        },
+      })
+    }
+
+    return note
+  })
+}
+
+/**
+ * Get or create tags by name (bulk operation)
+ * - Returns existing tags by name
+ * - Creates new tags if they don't exist
+ * - Returns all tag records as array
+ */
+export async function getOrCreateTags(tagNames: string[]): Promise<Tag[]> {
+  if (tagNames.length === 0) return []
+
+  const uniqueNames = [...new Set(tagNames)].slice(0, 10) // Max 10 tags
+
+  // Get existing tags
+  const existing = await prisma.tag.findMany({
+    where: { name: { in: uniqueNames } },
+  })
+
+  const existingNames = new Set(existing.map((t) => t.name))
+
+  // Create missing tags
+  const toCreate = uniqueNames.filter((name) => !existingNames.has(name))
+  const created =
+    toCreate.length > 0
+      ? await prisma.tag.createMany({
+          data: toCreate.map((name) => ({ name })),
+          skipDuplicates: true,
+        })
+      : { count: 0 }
+
+  // Return all tags
+  return await prisma.tag.findMany({
+    where: { name: { in: uniqueNames } },
+  })
+}
+
+/**
+ * Link tags to a note (establishes NoteTag relations)
+ * - Bulk create NoteTag records
+ * - Expects tags to already exist
+ */
+export async function linkTagsToNote(noteId: string, tagIds: string[]): Promise<void> {
+  if (tagIds.length === 0) return
+
+  await prisma.noteTag.createMany({
+    data: tagIds.map((tagId) => ({ noteId, tagId })),
+    skipDuplicates: true,
+  })
+}
+
+/**
+ * Remove all tags from a note (clear NoteTag relations)
+ */
+export async function clearNoteTags(noteId: string): Promise<void> {
+  await prisma.noteTag.deleteMany({
+    where: { noteId },
+  })
+}
+
+/**
+ * List notes for the authenticated user with pagination and filters
+ * - Pagination: page, limit from ListNotesQuery
+ * - Filters: tag, mood, search (keyword), dateFrom/dateTo
+ * - Sort: descending by createdAt
+ * Returns paginated summary records with total count
+ */
+export async function listNotes(
+  userId: string,
+  query: ListNotesQuery
+): Promise<{ notes: Note[]; total: number }> {
+  // TODO: Implement list with filters/pagination
+  // 1. Parse query parameters
+  // 2. Build WHERE clause with filters
+  // 3. Execute paginated query
+  // 4. Return notes + total count
+  throw new Error('Not implemented')
+}
+
+/**
+ * Get a single note by ID with access control
+ * - Owner always has access
+ * - Non-owner can view only if isPublic is true
+ * - Returns null if note doesn't exist or access denied
+ */
+export async function getNoteById(noteId: string, userId: string, isOwner: boolean): Promise<Note | null> {
+  // TODO: Implement get with access control
+  // 1. Query note by ID
+  // 2. Check isPublic or ownership
+  // 3. Return note with relations or null
+  throw new Error('Not implemented')
+}
+
+/**
+ * Update a note (partial update)
+ * - Replace all tag links when tags are provided
+ * - Preserve unmodified fields
+ * - Update only title, content, tags, mood, isPublic
+ */
+export async function updateNote(noteId: string, input: Partial<UpdateNoteRequest>): Promise<Note> {
+  // TODO: Implement partial update
+  // 1. Update note fields
+  // 2. If tags provided, replace all tag links
+  // 3. Update mood if provided
+  // 4. Return updated note with relations
+  throw new Error('Not implemented')
+}
+
+/**
+ * Delete a note by ID (permanent removal)
+ */
+export async function deleteNote(noteId: string): Promise<void> {
+  // TODO: Implement delete
+  // 1. Delete note record (cascades to NoteTag, Mood via schema)
+  throw new Error('Not implemented')
+}
+
+/**
+ * Check if user is the owner of a note
+ */
+export async function isNoteOwner(noteId: string, userId: string): Promise<boolean> {
+  // TODO: Implement ownership check
+  // 1. Query note by ID
+  // 2. Compare userId with note.userId
+  // 3. Return boolean
+  throw new Error('Not implemented')
+}
+
+export default {
+  createNote,
+  listNotes,
+  getNoteById,
+  updateNote,
+  deleteNote,
+  isNoteOwner,
+  getOrCreateTags,
+  linkTagsToNote,
+  clearNoteTags,
+}
