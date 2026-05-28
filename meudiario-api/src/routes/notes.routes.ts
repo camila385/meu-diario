@@ -245,9 +245,99 @@ router.post('/', authenticate, validate(createNoteSchema), notesController.creat
  */
 router.get('/', authenticate, validate(listNotesQuerySchema), notesController.listNotes)
 
-// TODO: T030 - Add Swagger @swagger annotations and implement
+// TODO: T031 - Add Swagger @swagger annotations and implement
 /**
- * GET /api/v1/notes/:id - Get a single note by ID
+ @swagger
+ /api/v1/notes/{id}:
+   get:
+     tags:
+       - Notes
+     summary: Get a single note by ID
+     description: Retrieve a complete note with all details (title, content, tags, mood). Owner always has access. Non-owners can view only if the note is marked as public (isPublic=true).
+     security:
+       - bearerAuth: []
+     parameters:
+       - name: id
+         in: path
+         required: true
+         schema:
+           type: string
+           format: uuid
+         description: The UUID identifier of the note to retrieve
+         example: "550e8400-e29b-41d4-a716-446655440000"
+     responses:
+       "200":
+         description: Note retrieved successfully
+         content:
+           application/json:
+             schema:
+               type: object
+               properties:
+                 success:
+                   type: boolean
+                   example: true
+                 data:
+                   type: object
+                   properties:
+                     id:
+                       type: string
+                       format: uuid
+                     title:
+                       type: string
+                     content:
+                       type: string
+                       description: Full note content (not truncated, unlike list summaries)
+                     tags:
+                       type: array
+                       items:
+                         type: object
+                         properties:
+                           id:
+                             type: string
+                             format: uuid
+                           name:
+                             type: string
+                             maxLength: 50
+                     mood:
+                       type: object
+                       properties:
+                         value:
+                           type: integer
+                           minimum: 1
+                           maximum: 5
+                         date:
+                           type: string
+                           format: date-time
+                     isPublic:
+                       type: boolean
+                     owner:
+                       type: object
+                       properties:
+                         id:
+                           type: string
+                           format: uuid
+                         username:
+                           type: string
+                     createdAt:
+                       type: string
+                       format: date-time
+                     updatedAt:
+                       type: string
+                       format: date-time
+                   example:
+                     id: "550e8400-e29b-41d4-a716-446655440000"
+                     title: "Dia produtivo"
+                     content: "Hoje foi um dia muito produtivo. Consegui terminar todos os projetos planejados..."
+                     tags: [{ id: "uuid-tag", name: "produtivo" }, { id: "uuid-tag2", name: "reflexão" }]
+                     mood: { value: 5, date: "2024-01-15T10:30:00Z" }
+                     isPublic: false
+                     owner: { id: "uuid-user", username: "johndoe" }
+                     createdAt: "2024-01-15T10:30:00Z"
+                     updatedAt: "2024-01-15T10:30:00Z"
+       "404":
+         description: Note not found (or access denied for non-owner/private notes)
+       "401":
+         description: Unauthorized (missing or invalid token)
  */
 router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.getNoteById)
 

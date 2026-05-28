@@ -54,12 +54,11 @@ export async function listNotes(req: Request, res: Response, next: NextFunction)
  */
 export async function getNoteById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // TODO: Implement orchestration
-    // 1. Extract userId from req.userId
-    // 2. Extract params as NoteIdParam (validated by validate middleware)
-    // 3. Call notesService.getNote(noteId, userId)
-    // 4. sendSuccess(res, note)
-    throw new Error('Not implemented')
+    // T029: Extract userId and note ID, call service, return detail
+    const userId = req.userId!
+    const { id: noteId } = req.params as unknown as NoteIdParam
+    const note = await notesService.getNote(noteId, userId)
+    sendSuccess(res, note, 200)
   } catch (error) {
     next(error)
   }

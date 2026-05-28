@@ -213,12 +213,26 @@ export async function listNotes(
  * - Non-owner can view only if isPublic is true
  * - Returns null if note doesn't exist or access denied
  */
-export async function getNoteById(noteId: string, userId: string, isOwner: boolean): Promise<Note | null> {
-  // TODO: Implement get with access control
-  // 1. Query note by ID
-  // 2. Check isPublic or ownership
-  // 3. Return note with relations or null
-  throw new Error('Not implemented')
+export async function getNoteById(noteId: string, userId: string): Promise<Note | null> {
+  // T027: Query note with all relations
+  const note = await prisma.note.findUnique({
+    where: { id: noteId },
+    include: {
+      user: { select: { id: true, username: true } },
+      noteTags: { include: { tag: true } },
+      mood: true,
+    },
+  })
+
+  if (!note) return null
+
+  // Check access: owner always has access, non-owner needs isPublic
+  const isOwner = note.userId === userId
+  if (!isOwner && !note.isPublic) {
+    return null
+  }
+
+  return note
 }
 
 /**
@@ -249,11 +263,11 @@ export async function deleteNote(noteId: string): Promise<void> {
  * Check if user is the owner of a note
  */
 export async function isNoteOwner(noteId: string, userId: string): Promise<boolean> {
-  // TODO: Implement ownership check
-  // 1. Query note by ID
-  // 2. Compare userId with note.userId
-  // 3. Return boolean
-  throw new Error('Not implemented')
+  const note = await prisma.note.findUnique({
+    where: { id: noteId },
+    select: { userId: true },
+  })
+  return note?.userId === userId ?? false
 }
 
 export default {

@@ -8,25 +8,26 @@ import { toNoteDetail, toNoteSummary } from '@/models/note.model'
 // Services contain business logic, no req/res, no Prisma access (P-07, P-03 compliance)
 
 /**
-@@* T016: Create a new note for user
-@@* - Validate input (delegated to validator middleware)
-@@* - Store note with gamification update (atomic in repository)
-@@* - Business logic: set isPublic default, compute streak, update points
-@@* Returns the created note with relations
-@@*/
-@@export async function createNote(userId: string, input: CreateNoteRequest) {
-@@  // Call notesRepository.createNote which handles:
-@@  // 1. Create note record with isPublic default
-@@  // 2. Get/create tags and link them
-@@  // 3. Store optional mood
-@@  const note = await notesRepository.createNote(userId, input)
-@@
-@@  // Call gamificationRepository to update points and streak
-@@  await gamificationRepository.updateOnNoteCreation(userId)
-@@
-@@  // Return note detail with mapper
-@@  return toNoteDetail(note)
-@@}
+/**
+ * T016: Create a new note for user
+ * - Validate input (delegated to validator middleware)
+ * - Store note with gamification update (atomic in repository)
+ * - Business logic: set isPublic default, compute streak, update points
+ * Returns the created note with relations
+ */
+export async function createNote(userId: string, input: CreateNoteRequest) {
+  // Call notesRepository.createNote which handles:
+  // 1. Create note record with isPublic default
+  // 2. Get/create tags and link them
+  // 3. Store optional mood
+  const note = await notesRepository.createNote(userId, input)
+
+  // Call gamificationRepository to update points and streak
+  await gamificationRepository.updateOnNoteCreation(userId)
+
+  // Return note detail with mapper
+  return toNoteDetail(note)
+}
 
 /**
  * T022: List notes for user with pagination and filters
@@ -57,12 +58,12 @@ export async function listNotes(userId: string, query: ListNotesQuery) {
  * - Throws 404 if not found or access denied
  */
 export async function getNote(noteId: string, userId: string) {
-  // TODO: Implement access control logic
-  // 1. Call notesRepository.getNoteById(noteId, ...)
-  // 2. Check ownership or isPublic flag
-  // 3. Throw NotFoundError or ForbiddenError if denied
-  // 4. Return note
-  throw new Error('Not implemented')
+  // T028: Call repository with access control (repository returns null if denied)
+  const note = await notesRepository.getNoteById(noteId, userId)
+  if (!note) {
+    throw new NotFoundError('Anotação não encontrada.')
+  }
+  return toNoteDetail(note)
 }
 
 /**
