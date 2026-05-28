@@ -1,23 +1,32 @@
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
 import { AppError, NotFoundError, ForbiddenError } from '@/errors'
+import notesRepository from '@/repositories/notes.repository'
+import { gamificationRepository } from '@/repositories/gamification.repository'
+import { toNoteDetail } from '@/models/note.model'
 
 // T011: Notes Service Scaffolding
 // Services contain business logic, no req/res, no Prisma access (P-07, P-03 compliance)
 
 /**
- * Create a new note for user
- * - Validate input (delegated to validator middleware)
- * - Store note with gamification update (atomic)
- * - Business logic: set isPublic default, compute streak, update points
- * Returns the created note with relations
- */
-export async function createNote(userId: string, input: CreateNoteRequest) {
-  // TODO: Implement business logic
-  // 1. Call notesRepository.createNote(userId, input)
-  // 2. Call gamificationRepository.updateOnNoteCreation(userId)
-  // 3. Return result
-  throw new Error('Not implemented')
-}
+@@* T016: Create a new note for user
+@@* - Validate input (delegated to validator middleware)
+@@* - Store note with gamification update (atomic in repository)
+@@* - Business logic: set isPublic default, compute streak, update points
+@@* Returns the created note with relations
+@@*/
+@@export async function createNote(userId: string, input: CreateNoteRequest) {
+@@  // Call notesRepository.createNote which handles:
+@@  // 1. Create note record with isPublic default
+@@  // 2. Get/create tags and link them
+@@  // 3. Store optional mood
+@@  const note = await notesRepository.createNote(userId, input)
+@@
+@@  // Call gamificationRepository to update points and streak
+@@  await gamificationRepository.updateOnNoteCreation(userId)
+@@
+@@  // Return note detail with mapper
+@@  return toNoteDetail(note)
+@@}
 
 /**
  * List notes for user with pagination and filters

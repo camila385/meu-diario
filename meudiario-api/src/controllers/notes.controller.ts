@@ -1,5 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery, NoteIdParam } from '@/validators/notes.validator'
+import notesService from '@/services/notes.service'
+import { sendSuccess } from '@/utils/response'
 
 // T010: Notes Controller Scaffolding
 // Controllers only orchestrate: extract req → call service → format response (P-07 compliance)
@@ -13,12 +15,11 @@ import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery, NoteIdParam 
  */
 export async function createNote(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // TODO: Implement orchestration
-    // 1. Extract userId from req.userId (set by auth middleware)
-    // 2. Extract body as CreateNoteRequest (validated by validate middleware)
-    // 3. Call notesService.createNote(userId, body)
-    // 4. sendSuccess(res, note, 201)
-    throw new Error('Not implemented')
+    // T017: Extract userId and validated body, call service, return 201
+    const userId = req.userId! // Set by authenticate middleware
+    const body = req.body as CreateNoteRequest // Validated by validate middleware
+    const note = await notesService.createNote(userId, body)
+    sendSuccess(res, note, 201)
   } catch (error) {
     next(error)
   }
