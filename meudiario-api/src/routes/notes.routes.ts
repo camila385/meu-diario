@@ -245,10 +245,17 @@ router.post('/', authenticate, validate(createNoteSchema), notesController.creat
  */
 router.get('/', authenticate, validate(listNotesQuerySchema), notesController.listNotes)
 
-// TODO: T031 - Add Swagger @swagger annotations and implement
 /**
  @swagger
  /api/v1/notes/{id}:
+   parameters:
+     - name: id
+       in: path
+       required: true
+       schema:
+         type: string
+         format: uuid
+       description: The UUID identifier of the note
    get:
      tags:
        - Notes
@@ -256,15 +263,6 @@ router.get('/', authenticate, validate(listNotesQuerySchema), notesController.li
      description: Retrieve a complete note with all details (title, content, tags, mood). Owner always has access. Non-owners can view only if the note is marked as public (isPublic=true).
      security:
        - bearerAuth: []
-     parameters:
-       - name: id
-         in: path
-         required: true
-         schema:
-           type: string
-           format: uuid
-         description: The UUID identifier of the note to retrieve
-         example: "550e8400-e29b-41d4-a716-446655440000"
      responses:
        "200":
          description: Note retrieved successfully
@@ -286,80 +284,33 @@ router.get('/', authenticate, validate(listNotesQuerySchema), notesController.li
                        type: string
                      content:
                        type: string
-                       description: Full note content (not truncated, unlike list summaries)
                      tags:
                        type: array
                        items:
                          type: object
-                         properties:
-                           id:
-                             type: string
-                             format: uuid
-                           name:
-                             type: string
-                             maxLength: 50
                      mood:
                        type: object
-                       properties:
-                         value:
-                           type: integer
-                           minimum: 1
-                           maximum: 5
-                         date:
-                           type: string
-                           format: date-time
                      isPublic:
                        type: boolean
                      owner:
                        type: object
-                       properties:
-                         id:
-                           type: string
-                           format: uuid
-                         username:
-                           type: string
                      createdAt:
                        type: string
                        format: date-time
                      updatedAt:
                        type: string
                        format: date-time
-                   example:
-                     id: "550e8400-e29b-41d4-a716-446655440000"
-                     title: "Dia produtivo"
-                     content: "Hoje foi um dia muito produtivo. Consegui terminar todos os projetos planejados..."
-                     tags: [{ id: "uuid-tag", name: "produtivo" }, { id: "uuid-tag2", name: "reflexão" }]
-                     mood: { value: 5, date: "2024-01-15T10:30:00Z" }
-                     isPublic: false
-                     owner: { id: "uuid-user", username: "johndoe" }
-                     createdAt: "2024-01-15T10:30:00Z"
-                     updatedAt: "2024-01-15T10:30:00Z"
        "404":
          description: Note not found (or access denied for non-owner/private notes)
        "401":
-         description: Unauthorized (missing or invalid token)
- */
-router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.getNoteById)
-
-// TODO: T038 - Add Swagger @swagger annotations and implement
-/**
- @swagger
- /api/v1/notes/{id}:
+         description: Unauthorized
    patch:
      tags:
        - Notes
      summary: Update a note (partial update)
-     description: Partially update an existing note. All fields are optional - only provided fields are updated. Tag list is fully replaced when tags are provided (not appended). Ownership required.
+     description: Partially update an existing note. All fields are optional - only provided fields are updated. Tag list is fully replaced when tags are provided. Ownership required.
      security:
        - bearerAuth: []
-     parameters:
-       - name: id
-         in: path
-         required: true
-         schema:
-           type: string
-           format: uuid
-         description: The UUID identifier of the note to update
      requestBody:
        required: true
        content:
@@ -370,84 +321,51 @@ router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.ge
                title:
                  type: string
                  maxLength: 200
-                 description: Note title (optional, only update if provided)
                content:
                  type: string
                  maxLength: 10000
-                 description: Note content (optional)
                tags:
                  type: array
                  maxItems: 10
                  items:
                    type: string
                    maxLength: 50
-                 description: List of tag names (optional, replaces all existing tags)
                mood:
                  type: integer
                  minimum: 1
                  maximum: 5
-                 description: Mood value on scale 1-5 (optional, can be null to remove)
                isPublic:
                  type: boolean
-                 description: Visibility flag (optional)
-             example:
-               title: "Dia atualizado"
-               tags: ["reflexão", "produtivo"]
-               mood: 4
      responses:
        "200":
          description: Note updated successfully
-         content:
-           application/json:
-             schema:
-               type: object
-               properties:
-                 success:
-                   type: boolean
-                   example: true
-                 data:
-                   type: object
-                   description: Updated NoteDetail with all fields
        "400":
-         description: Validation error (invalid fields, constraints violated)
+         description: Validation error
        "401":
-         description: Unauthorized (missing or invalid token)
+         description: Unauthorized
        "403":
-         description: Forbidden (not the owner of the note)
+         description: Forbidden (not the owner)
        "404":
          description: Note not found
- */
-router.patch('/:id', authenticate, validate(updateNoteSchema), notesController.updateNote)
-
-// TODO: T044 - Add Swagger @swagger annotations and implement
-/**
- @swagger
- /api/v1/notes/{id}:
    delete:
      tags:
        - Notes
      summary: Delete a note permanently
-     description: Permanently delete an existing note. This action cannot be undone. Cascades to delete all associated NoteTag records and Mood records. Ownership required.
+     description: Permanently delete an existing note. This action cannot be undone. Ownership required.
      security:
        - bearerAuth: []
-     parameters:
-       - name: id
-         in: path
-         required: true
-         schema:
-           type: string
-           format: uuid
-         description: The UUID identifier of the note to delete
      responses:
        "204":
-         description: Note deleted successfully (no content response)
+         description: Note deleted successfully
        "401":
-         description: Unauthorized (missing or invalid token)
+         description: Unauthorized
        "403":
-         description: Forbidden (not the owner of the note)
+         description: Forbidden (not the owner)
        "404":
          description: Note not found
  */
+router.get('/:id', authenticate, validate(noteIdParamSchema), notesController.getNoteById)
+router.patch('/:id', authenticate, validate(updateNoteSchema), notesController.updateNote)
 router.delete('/:id', authenticate, validate(noteIdParamSchema), notesController.deleteNote)
 
 export default router

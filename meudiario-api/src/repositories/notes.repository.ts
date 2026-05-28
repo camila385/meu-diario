@@ -312,7 +312,7 @@ export async function isNoteOwner(noteId: string, userId: string): Promise<boole
     where: { id: noteId },
     select: { userId: true },
   })
-  return note?.userId === userId ?? false
+  return note ? note.userId === userId : false
 }
 
 export default {
