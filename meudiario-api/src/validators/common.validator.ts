@@ -20,7 +20,6 @@ export const passwordSchema = z
   .min(8, 'A senha deve ter no mínimo 8 caracteres.')
   .max(100, 'A senha deve ter no máximo 100 caracteres.')
 
-// Notes DTO Primitives (T004)
 export const noteTitleSchema = z
   .string()
   .trim()

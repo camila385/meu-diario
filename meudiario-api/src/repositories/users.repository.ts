@@ -1,12 +1,12 @@
 import type { Gamification, User } from '@/generated/prisma'
 import { prisma } from './prisma.client'
 
-export const usersRepository = {
+export class UsersRepository {
 	findByEmail(email: string): Promise<User | null> {
 		return prisma.user.findUnique({
 			where: { email },
 		})
-	},
+	}
 
 	findByEmailOrUsername(email: string, username: string): Promise<User | null> {
 		return prisma.user.findFirst({
@@ -14,13 +14,13 @@ export const usersRepository = {
 				OR: [{ email }, { username }],
 			},
 		})
-	},
+	}
 
 	findById(id: string): Promise<User | null> {
 		return prisma.user.findUnique({
 			where: { id },
 		})
-	},
+	}
 
 	create(data: { email: string; username: string; passwordHash: string }): Promise<User> {
 		return prisma.user.create({
@@ -30,7 +30,7 @@ export const usersRepository = {
 				passwordHash: data.passwordHash,
 			},
 		})
-	},
+	}
 
 	async createWithGamification(data: {
 		email: string
@@ -57,5 +57,5 @@ export const usersRepository = {
 
 			return { user, gamification }
 		})
-	},
+	}
 }
