@@ -1,66 +1,65 @@
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
 import { AppError, NotFoundError, ForbiddenError } from '@/errors'
-import notesRepository from '@/repositories/notes.repository'
-import { gamificationRepository } from '@/repositories/gamification.repository'
+import type { NotesRepository } from '@/repositories/notes.repository'
+import type { GamificationRepository } from '@/repositories/gamification.repository'
 import { toNoteDetail, toNoteSummary } from '@/models/note.model'
 
-export async function createNote(userId: string, input: CreateNoteRequest) {
-  const note = await notesRepository.createNote(userId, input)
+export class NotesService {
+  constructor(
+    private readonly notesRepository: NotesRepository,
+    private readonly gamificationRepository: GamificationRepository
+  ) {}
 
-  await gamificationRepository.updateOnNoteCreation(userId)
+  async createNote(userId: string, input: CreateNoteRequest) {
+    const note = await this.notesRepository.createNote(userId, input)
 
-  return toNoteDetail(note)
-}
+    await this.gamificationRepository.updateOnNoteCreation(userId)
 
-export async function listNotes(userId: string, query: ListNotesQuery) {
-  const { notes, total } = await notesRepository.listNotes(userId, query)
-
-  const summaries = notes.map(toNoteSummary)
-
-  const meta = {
-    page: query.page,
-    limit: query.limit,
-    total,
+    return toNoteDetail(note)
   }
 
-  return { summaries, meta }
-}
+  async listNotes(userId: string, query: ListNotesQuery) {
+    const { notes, total } = await this.notesRepository.listNotes(userId, query)
 
-export async function getNote(noteId: string, userId: string) {
-  const note = await notesRepository.getNoteById(noteId, userId)
-  if (!note) {
-    throw new NotFoundError('Anotação não encontrada.')
-  }
-  return toNoteDetail(note)
-}
+    const summaries = notes.map(toNoteSummary)
 
-export async function updateNote(noteId: string, userId: string, input: Partial<UpdateNoteRequest>) {
-  const isOwner = await notesRepository.isNoteOwner(noteId, userId)
-  if (!isOwner) {
-    throw new ForbiddenError('Acesso negado. Apenas o proprietário pode editar esta anotação.')
+    const meta = {
+      page: query.page,
+      limit: query.limit,
+      total,
+    }
+
+    return { summaries, meta }
   }
 
-  const note = await notesRepository.updateNote(noteId, input)
-  if (!note) {
-    throw new NotFoundError('Anotação não encontrada.')
+  async getNote(noteId: string, userId: string) {
+    const note = await this.notesRepository.getNoteById(noteId, userId)
+    if (!note) {
+      throw new NotFoundError('Anotação não encontrada.')
+    }
+    return toNoteDetail(note)
   }
 
-  return toNoteDetail(note)
-}
+  async updateNote(noteId: string, userId: string, input: Partial<UpdateNoteRequest>) {
+    const isOwner = await this.notesRepository.isNoteOwner(noteId, userId)
+    if (!isOwner) {
+      throw new ForbiddenError('Acesso negado. Apenas o proprietário pode editar esta anotação.')
+    }
 
-export async function deleteNote(noteId: string, userId: string): Promise<void> {
-  const isOwner = await notesRepository.isNoteOwner(noteId, userId)
-  if (!isOwner) {
-    throw new ForbiddenError('Acesso negado. Apenas o proprietário pode excluir esta anotação.')
+    const note = await this.notesRepository.updateNote(noteId, input)
+    if (!note) {
+      throw new NotFoundError('Anotação não encontrada.')
+    }
+
+    return toNoteDetail(note)
   }
 
-  await notesRepository.deleteNote(noteId)
-}
+  async deleteNote(noteId: string, userId: string): Promise<void> {
+    const isOwner = await this.notesRepository.isNoteOwner(noteId, userId)
+    if (!isOwner) {
+      throw new ForbiddenError('Acesso negado. Apenas o proprietário pode excluir esta anotação.')
+    }
 
-export default {
-  createNote,
-  listNotes,
-  getNote,
-  updateNote,
-  deleteNote,
+    await this.notesRepository.deleteNote(noteId)
+  }
 }
