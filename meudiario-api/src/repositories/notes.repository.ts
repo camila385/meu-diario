@@ -1,12 +1,9 @@
-import { PrismaClient } from '@/generated/prisma'
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
 import type { Note, Tag } from '@/models/note.model'
+import { prisma } from './prisma.client'
 
 // T008: Notes Repository Scaffolding
-// Single place for Prisma access (P-03, P-12 compliance)
-
-// Initialize Prisma Client
-const prisma = new PrismaClient()
+// Single place for Prisma access (P-03, P-12, P-14 compliance)
 
 /**
  * T014: Create a new note for the authenticated user
