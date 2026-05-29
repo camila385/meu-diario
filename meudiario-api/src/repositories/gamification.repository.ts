@@ -3,7 +3,7 @@ import { prisma } from './prisma.client'
 
 const POINTS_PER_NOTE = 10
 
-export const gamificationRepository = {
+export class GamificationRepository {
 	createForUser(userId: string): Promise<Gamification> {
 		return prisma.gamification.create({
 			data: {
@@ -13,13 +13,13 @@ export const gamificationRepository = {
 				streak: 0,
 			},
 		})
-	},
+	}
 
 	findByUserId(userId: string): Promise<Gamification | null> {
 		return prisma.gamification.findUnique({
 			where: { userId },
 		})
-	},
+	}
 
 	async updateOnNoteCreation(userId: string): Promise<Gamification> {
 		const gamification = await this.findByUserId(userId)
@@ -57,5 +57,5 @@ export const gamificationRepository = {
 				lastActivity: now,
 			},
 		})
-	},
+	}
 }
