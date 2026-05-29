@@ -1,14 +1,9 @@
 import type { Note as PrismaNote, Tag as PrismaTag, Mood as PrismaMood } from '@/generated/prisma'
 
-// T006: Re-export Prisma types (P-12 compliance: models derived from Prisma)
 export type Note = PrismaNote
 export type Tag = PrismaTag
 export type Mood = PrismaMood
 
-/**
- * Note Summary DTO (returned by list endpoint)
- * Fields: id, title, excerpt, tags, mood, isPublic, createdAt
- */
 export interface NoteSummary {
   id: string
   title: string
@@ -19,10 +14,6 @@ export interface NoteSummary {
   createdAt: Date
 }
 
-/**
- * Note Detail DTO (returned by create, get detail, update endpoints)
- * Fields: id, title, content, tags, mood, isPublic, createdAt, updatedAt, owner
- */
 export interface NoteDetail {
   id: string
   title: string
@@ -38,13 +29,7 @@ export interface NoteDetail {
   }
 }
 
-/**
- * Compute excerpt from note content
- * - First 150 characters of content
- * - Trimmed to word boundary
- * - Returns empty string if content is empty
- */
-export function computeExcerpt(content?: string | null): string {
+export const computeExcerpt = (content?: string | null): string => {
   if (!content || content.trim().length === 0) {
     return ''
   }
@@ -58,34 +43,28 @@ export function computeExcerpt(content?: string | null): string {
   return trimmed + '...'
 }
 
-/**
- * Map Prisma Note + relations to NoteSummary DTO
- */
-export function toNoteSummary(
+export const toNoteSummary = (
   note: PrismaNote & { noteTags?: Array<{ tag: Tag }> | undefined }
-): NoteSummary {
+): NoteSummary => {
   const tags = note.noteTags?.map((link) => link.tag) ?? []
   return {
     id: note.id,
     title: note.title,
     excerpt: computeExcerpt(note.content),
     tags,
-    mood: undefined, // Populated by service layer if needed
+    mood: undefined,
     isPublic: note.isPublic,
     createdAt: note.createdAt,
   }
 }
 
-/**
- * Map Prisma Note + relations to NoteDetail DTO
- */
-export function toNoteDetail(
+export const toNoteDetail = (
   note: PrismaNote & {
     user?: { id: string; username: string }
     noteTags?: Array<{ tag: Tag }> | undefined
     mood?: Mood | null
   }
-): NoteDetail {
+): NoteDetail => {
   const tags = note.noteTags?.map((link) => link.tag) ?? []
   return {
     id: note.id,

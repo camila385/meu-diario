@@ -1,8 +1,5 @@
 import { Router } from 'express'
-import { NotesRepository } from '@/repositories/notes.repository'
-import { GamificationRepository } from '@/repositories/gamification.repository'
-import { NotesService } from '@/services/notes.service'
-import { NotesController } from '@/controllers/notes.controller'
+import { notesController } from '@/composition-root'
 import { authenticate } from '@/middlewares/auth.middleware'
 import { validate } from '@/middlewares/validate.middleware'
 import {
@@ -13,12 +10,6 @@ import {
 } from '@/validators/notes.validator'
 
 const router = Router()
-
-// Instanciar dependências
-const notesRepository = new NotesRepository()
-const gamificationRepository = new GamificationRepository()
-const notesService = new NotesService(notesRepository, gamificationRepository)
-const notesController = new NotesController(notesService)
 
 /**
  * @swagger

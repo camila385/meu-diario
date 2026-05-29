@@ -1,17 +1,10 @@
 import { Router } from 'express'
-import { UsersRepository } from '@/repositories/users.repository'
-import { AuthService } from '@/services/auth.service'
-import { AuthController } from '@/controllers/auth.controller'
+import { authController } from '@/composition-root'
 import { authenticate } from '@/middlewares/auth.middleware'
 import { validate } from '@/middlewares/validate.middleware'
 import { loginSchema, registerSchema } from '@/validators/auth.validator'
 
 const router = Router()
-
-// Instanciar dependências
-const usersRepository = new UsersRepository()
-const authService = new AuthService(usersRepository)
-const authController = new AuthController(authService)
 
 /**
  * @swagger

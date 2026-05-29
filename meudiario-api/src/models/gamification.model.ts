@@ -1,6 +1,5 @@
 import type { Gamification as PrismaGamification } from '@/generated/prisma'
 
-// T007: Re-export Prisma types
 export type Gamification = PrismaGamification
 
 export interface GamificationResponse {
@@ -11,10 +10,7 @@ export interface GamificationResponse {
   lastActivity: Date | null
 }
 
-/**
- * Map Prisma Gamification to GamificationResponse DTO
- */
-export function toGamificationResponse(gamification: Gamification): GamificationResponse {
+export const toGamificationResponse = (gamification: Gamification): GamificationResponse => {
   return {
     id: gamification.id,
     points: gamification.points,
