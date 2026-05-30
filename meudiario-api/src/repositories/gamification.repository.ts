@@ -1,7 +1,12 @@
-import type { Gamification } from '@/generated/prisma'
+import type { Badge, Gamification, UserBadge } from '@/generated/prisma'
 import { prisma } from './prisma.client'
 
-const POINTS_PER_NOTE = 10
+export type RankingRow = {
+	userId: string
+	username: string
+	points: number
+	level: number
+}
 
 export class GamificationRepository {
 	createForUser(userId: string): Promise<Gamification> {
@@ -16,45 +21,91 @@ export class GamificationRepository {
 	}
 
 	findByUserId(userId: string): Promise<Gamification | null> {
-		return prisma.gamification.findUnique({
+		return prisma.gamification.findUnique({ where: { userId } })
+	}
+
+	findByIds(userIds: string[]): Promise<Gamification[]> {
+		return prisma.gamification.findMany({ where: { userId: { in: userIds } } })
+	}
+
+	findBadges(): Promise<Badge[]> {
+		return prisma.badge.findMany({ orderBy: { name: 'asc' } })
+	}
+
+	findUserBadges(userId: string): Promise<UserBadge[]> {
+		return prisma.userBadge.findMany({ where: { userId } })
+	}
+
+	updateUserGamification(userId: string, data: Partial<Pick<Gamification, 'points' | 'level' | 'streak' | 'lastActivity'>>): Promise<Gamification> {
+		return prisma.gamification.update({ where: { userId }, data })
+	}
+
+	upsertForUser(userId: string): Promise<Gamification> {
+		return prisma.gamification.upsert({
 			where: { userId },
+			create: {
+				userId,
+				points: 0,
+				level: 1,
+				streak: 0,
+			},
+			update: {},
 		})
 	}
 
-	async updateOnNoteCreation(userId: string): Promise<Gamification> {
-		const gamification = await this.findByUserId(userId)
+	listRanking(userIds: string[]): Promise<RankingRow[]> {
+		return prisma.user.findMany({
+			where: { id: { in: userIds } },
+			select: {
+				id: true,
+				username: true,
+				gamification: {
+					select: {
+						points: true,
+						level: true,
+					},
+				},
+			},
+			orderBy: [{ gamification: { points: 'desc' } }, { username: 'asc' }],
+		}).then((users) =>
+			users.map((user) => ({
+				userId: user.id,
+				username: user.username,
+				points: user.gamification?.points ?? 0,
+				level: user.gamification?.level ?? 1,
+			}))
+		)
+	}
 
-		if (!gamification) {
-			return await this.createForUser(userId)
-		}
+	findMutualFollowIds(userId: string): Promise<string[]> {
+		return prisma.follow.findMany({
+			where: {
+				OR: [{ followerId: userId }, { followingId: userId }],
+			},
+			select: {
+				followerId: true,
+				followingId: true,
+			},
+		}).then((rows) => {
+			const followers = new Set(rows.filter((row) => row.followingId === userId).map((row) => row.followerId))
+			const following = new Set(rows.filter((row) => row.followerId === userId).map((row) => row.followingId))
+			return [...followers].filter((id) => following.has(id)).slice(0, 50)
+		})
+	}
 
-		const now = new Date()
-		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	async upsertUserBadge(userId: string, badgeId: string): Promise<UserBadge> {
+		return prisma.userBadge.upsert({
+			where: { userId_badgeId: { userId, badgeId } },
+			create: { userId, badgeId },
+			update: {},
+		})
+	}
 
-		let lastActivity = gamification.lastActivity
-		let newStreak = gamification.streak
-
-		if (lastActivity) {
-			const lastActivityDate = new Date(lastActivity.getFullYear(), lastActivity.getMonth(), lastActivity.getDate())
-			const diffDays = Math.floor((today.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60 * 24))
-
-			if (diffDays === 0) {
-				newStreak = gamification.streak
-			} else if (diffDays === 1) {
-				newStreak = gamification.streak + 1
-			} else {
-				newStreak = 1
-			}
-		} else {
-			newStreak = 1
-		}
-
-		return await prisma.gamification.update({
+	updateOnNoteCreation(userId: string): Promise<Gamification> {
+		return prisma.gamification.update({
 			where: { userId },
 			data: {
-				points: gamification.points + POINTS_PER_NOTE,
-				streak: newStreak,
-				lastActivity: now,
+				points: { increment: 10 },
 			},
 		})
 	}

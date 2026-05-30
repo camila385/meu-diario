@@ -1,19 +1,19 @@
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
 import { AppError, NotFoundError, ForbiddenError } from '@/errors'
 import type { NotesRepository } from '@/repositories/notes.repository'
-import type { GamificationRepository } from '@/repositories/gamification.repository'
+import type { GamificationService } from '@/services/gamification.service'
 import { toNoteDetail, toNoteSummary } from '@/models/note.model'
 
 export class NotesService {
   constructor(
     private readonly notesRepository: NotesRepository,
-    private readonly gamificationRepository: GamificationRepository
+    private readonly gamificationService: GamificationService
   ) {}
 
   async createNote(userId: string, input: CreateNoteRequest) {
     const note = await this.notesRepository.createNote(userId, input)
 
-    await this.gamificationRepository.updateOnNoteCreation(userId)
+    await this.gamificationService.awardForNote(userId, input)
 
     return toNoteDetail(note)
   }
