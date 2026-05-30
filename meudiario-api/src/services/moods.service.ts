@@ -10,12 +10,11 @@ import type {
     MonthlyMoodSummaryQuery,
 } from '@/validators/moods.validator';
 import {
-    toMoodHistoryItem,
-    toMoodResponse,
     type MonthlyMoodSummary,
     type MoodResponse,
     type WeeklyMoodSummary,
 } from '@/models/mood.model';
+import { toMoodHistoryItem, toMoodResponse } from '@/mappers/mood.mapper';
 
 export class MoodsService {
     constructor(private readonly moodsRepository: MoodsRepository) {}
