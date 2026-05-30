@@ -6,7 +6,7 @@ import type {
 import { AppError, NotFoundError, ForbiddenError } from '@/errors';
 import type { NotesRepository } from '@/repositories/notes.repository';
 import type { GamificationService } from '@/services/gamification.service';
-import { toNoteDetail, toNoteSummary } from '@/models/note.model';
+import { toNoteDetail, toNoteSummary } from '@/mappers/note.mapper';
 
 export class NotesService {
     constructor(
