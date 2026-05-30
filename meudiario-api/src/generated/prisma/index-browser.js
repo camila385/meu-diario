@@ -201,6 +201,15 @@ exports.Prisma.CommentScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.ReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  reason: 'reason',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -215,7 +224,11 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
+exports.TargetType = exports.$Enums.TargetType = {
+  note: 'note',
+  comment: 'comment',
+  user: 'user'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -228,7 +241,8 @@ exports.Prisma.ModelName = {
   UserBadge: 'UserBadge',
   Follow: 'Follow',
   Like: 'Like',
-  Comment: 'Comment'
+  Comment: 'Comment',
+  Report: 'Report'
 };
 
 /**

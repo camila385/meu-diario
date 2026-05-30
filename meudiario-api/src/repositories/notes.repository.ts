@@ -184,4 +184,24 @@ export class NotesRepository {
     const note = await prisma.note.findUnique({ where: { id: noteId }, select: { userId: true } })
     return note ? note.userId === userId : false
   }
+  // ====== SOCIAL FEED HELPERS ======
+
+  /**
+   * Get note without user context (for social feed - checks isPublic independently)
+   */
+  async getById(noteId: string): Promise<Note | null> {
+    return await prisma.note.findUnique({
+      where: { id: noteId },
+      include: { user: { select: { id: true, username: true } }, noteTags: { include: { tag: true } }, mood: true },
+    })
+  }
+
+  /**
+   * Get comment by ID (for social operations)
+   */
+  async getCommentById(commentId: string): Promise<any | null> {
+    return await prisma.comment.findUnique({
+      where: { id: commentId },
+    })
+  }
 }

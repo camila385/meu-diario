@@ -28,6 +28,7 @@ model User {
   userBadges   UserBadge[]
   following    Follow[]      @relation("follower")
   followers    Follow[]      @relation("following")
+  reports      Report[]
   likes        Like[]
   comments     Comment[]
 }
@@ -138,4 +139,23 @@ model Comment {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+enum TargetType {
+  note
+  comment
+  user
+}
+
+model Report {
+  id         String     @id @default(uuid())
+  reporterId String
+  targetType TargetType
+  targetId   String
+  reason     String
+  createdAt  DateTime   @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId, reason])
 }

@@ -13,21 +13,22 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  username     String    @unique
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
   passwordHash String
   avatarUrl    String?
-  isPublic     Boolean   @default(false)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isPublic     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   notes        Note[]
   moods        Mood[]
   gamification Gamification?
   userBadges   UserBadge[]
-  following    Follow[]  @relation("follower")
-  followers    Follow[]  @relation("following")
+  following    Follow[]      @relation("follower")
+  followers    Follow[]      @relation("following")
+  reports      Report[]
   likes        Like[]
   comments     Comment[]
 }
@@ -41,11 +42,11 @@ model Note {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  noteTags  NoteTag[]
-  mood      Mood?
-  likes     Like[]
-  comments  Comment[]
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  noteTags NoteTag[]
+  mood     Mood?
+  likes    Like[]
+  comments Comment[]
 }
 
 model Tag {
@@ -58,8 +59,8 @@ model NoteTag {
   noteId String
   tagId  String
 
-  note   Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([noteId, tagId])
 }
@@ -71,8 +72,8 @@ model Mood {
   value  Int
   date   DateTime @default(now())
 
-  user   User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note   Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
 }
@@ -85,7 +86,7 @@ model Gamification {
   streak       Int       @default(0)
   lastActivity DateTime?
 
-  user         User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Badge {
@@ -101,8 +102,8 @@ model UserBadge {
   badgeId    String
   unlockedAt DateTime @default(now())
 
-  user       User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge      Badge @relation(fields: [badgeId], references: [id])
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id])
 
   @@id([userId, badgeId])
 }
@@ -112,8 +113,8 @@ model Follow {
   followingId String
   createdAt   DateTime @default(now())
 
-  follower    User @relation("follower",  fields: [followerId],  references: [id], onDelete: Cascade)
-  following   User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+  follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@id([followerId, followingId])
 }
@@ -123,8 +124,8 @@ model Like {
   noteId    String
   createdAt DateTime @default(now())
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
   @@id([userId, noteId])
 }
@@ -136,6 +137,25 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+enum TargetType {
+  note
+  comment
+  user
+}
+
+model Report {
+  id         String     @id @default(uuid())
+  reporterId String
+  targetType TargetType
+  targetId   String
+  reason     String
+  createdAt  DateTime   @default(now())
+
+  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId, reason])
 }
