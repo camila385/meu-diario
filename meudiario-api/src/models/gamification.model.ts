@@ -60,16 +60,6 @@ export interface GamificationResponse {
     lastActivity: Date | null;
 }
 
-export const toGamificationResponse = (gamification: Gamification): GamificationResponse => {
-    return {
-        id: gamification.id,
-        points: (gamification.points as unknown as number) ?? 0,
-        level: (gamification.level as unknown as number) ?? 1,
-        streak: (gamification.streak as unknown as number) ?? 0,
-        lastActivity: (gamification.lastActivity as unknown as Date) ?? null,
-    };
-};
-
 export const LEVELS: LevelDefinition[] = [
     { level: 1, name: 'Iniciante', minimumPoints: 0 },
     { level: 2, name: 'Aprendiz', minimumPoints: 100 },
@@ -171,22 +161,3 @@ export const getMilestoneSteps = (
     next60: Math.max(0, 60 - streak),
     next100: Math.max(0, 100 - streak),
 });
-
-export const toBadgeResponse = (
-    badge: { id: string; name: string; description: string },
-    unlockedAt: Date | null,
-): BadgeResponse => ({
-    id: badge.id,
-    name: badge.name,
-    description: badge.description,
-    unlocked: Boolean(unlockedAt),
-    unlockedAt: unlockedAt ? unlockedAt.toISOString() : null,
-});
-
-export const toWeeklyChallengeResponse = (input: {
-    challengeId: number;
-    description: string;
-    rewardPoints: number;
-    progress: number;
-    completed: boolean;
-}): WeeklyChallengeResponse => input;

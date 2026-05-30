@@ -10,13 +10,12 @@ import {
     getMilestoneSteps,
     getNextLevel,
     getProgressPercent,
-    toBadgeResponse,
-    toWeeklyChallengeResponse,
     type BadgeResponse,
     type GamificationProgressResponse,
     type RankingResponse,
     type WeeklyChallengeResponse,
 } from '@/models/gamification.model';
+import { toBadgeResponse, toWeeklyChallengeResponse } from '@/mappers/gamification.mapper';
 import { addUtcDays, getUtcDayRange, toUtcDayStart } from '@/utils/date';
 import {
     getChallengeForCurrentWeek,
