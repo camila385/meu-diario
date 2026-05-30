@@ -14553,6 +14553,7 @@ export namespace Prisma {
   export type MoodWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     noteId?: string
+    userId_date?: MoodUserIdDateCompoundUniqueInput
     AND?: MoodWhereInput | MoodWhereInput[]
     OR?: MoodWhereInput[]
     NOT?: MoodWhereInput | MoodWhereInput[]
@@ -14561,7 +14562,7 @@ export namespace Prisma {
     date?: DateTimeFilter<"Mood"> | Date | string
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     note?: XOR<NoteNullableScalarRelationFilter, NoteWhereInput> | null
-  }, "id" | "noteId">
+  }, "id" | "noteId" | "userId_date">
 
   export type MoodOrderByWithAggregationInput = {
     id?: SortOrder
@@ -15830,6 +15831,11 @@ export namespace Prisma {
   export type NoteNullableScalarRelationFilter = {
     is?: NoteWhereInput | null
     isNot?: NoteWhereInput | null
+  }
+
+  export type MoodUserIdDateCompoundUniqueInput = {
+    userId: string
+    date: Date | string
   }
 
   export type MoodCountOrderByAggregateInput = {

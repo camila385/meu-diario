@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS "Mood_userId_date_key" ON "Mood"("userId", "date");
