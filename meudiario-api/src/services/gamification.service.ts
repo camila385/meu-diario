@@ -89,7 +89,12 @@ export class GamificationService {
 
         if (challenge.kind === 'note-tags') {
             const { notes } = await this.notesRepository.listNotes(userId, { page: 1, limit: 100 });
-            const matching = notes.filter((note) => note.noteTags?.length >= challenge.target);
+            const matching = notes.filter(
+                (note) =>
+                    (note as { noteTags?: Array<unknown> }).noteTags?.length !== undefined &&
+                    ((note as { noteTags?: Array<unknown> }).noteTags?.length ?? 0) >=
+                        challenge.target,
+            );
             progress = Math.min(matching.length, 1);
             completed = matching.length > 0;
         }

@@ -11,7 +11,7 @@ export type RankingRow = {
 export class GamificationRepository {
     async createForUser(
         userId: string,
-    ): Promise<{ id: string; points: number; level: number; streak: number }> {
+    ): Promise<{ id: string; points: number; level: number; streak: number; lastActivity: Date | null }> {
         await prisma.user.update({ where: { id: userId }, data: {} }).catch(() => null);
         const user = await prisma.user.findUnique({ where: { id: userId } });
         return {
@@ -19,6 +19,7 @@ export class GamificationRepository {
             points: user!.points ?? 0,
             level: user!.level ?? 1,
             streak: user!.streak ?? 0,
+            lastActivity: user!.lastActivity ?? null,
         };
     }
 
@@ -78,7 +79,7 @@ export class GamificationRepository {
 
     upsertForUser(
         userId: string,
-    ): Promise<{ id: string; points: number; level: number; streak: number }> {
+    ): Promise<{ id: string; points: number; level: number; streak: number; lastActivity: Date | null }> {
         return prisma.user
             .upsert({
                 where: { id: userId },
@@ -90,6 +91,7 @@ export class GamificationRepository {
                 points: u.points ?? 0,
                 level: u.level ?? 1,
                 streak: u.streak ?? 0,
+                lastActivity: u.lastActivity ?? null,
             }));
     }
 

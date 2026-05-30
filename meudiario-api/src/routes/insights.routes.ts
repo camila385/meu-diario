@@ -21,7 +21,7 @@ const router = Router();
  *     security:
  *       - bearerAuth: []
  */
-router.get('/calendar', authenticate, validate(calendarQuerySchema, { source: 'query' }), (req, res) => 
+router.get('/calendar', authenticate, validate(calendarQuerySchema, 'query'), (req, res) =>
     insightsController.getCalendar(req, res),
 );
 
@@ -42,7 +42,7 @@ router.get('/calendar', authenticate, validate(calendarQuerySchema, { source: 'q
  *           default: 10
  *           maximum: 50
  */
-router.get('/tags', authenticate, validate(tagsQuerySchema, { source: 'query' }), (req, res) =>
+router.get('/tags', authenticate, validate(tagsQuerySchema, 'query'), (req, res) =>
     insightsController.getTags(req, res),
 );
 
@@ -65,7 +65,7 @@ router.get('/tags', authenticate, validate(tagsQuerySchema, { source: 'query' })
  *         schema:
  *           type: integer
  */
-router.get('/wordcloud', authenticate, validate(wordcloudQuerySchema, { source: 'query' }), (req, res) => 
+router.get('/wordcloud', authenticate, validate(wordcloudQuerySchema, 'query'), (req, res) =>
     insightsController.getWordcloud(req, res),
 );
 
@@ -100,7 +100,7 @@ router.get('/weekdays', authenticate, (req, res) => insightsController.getWeekda
  *         schema:
  *           type: integer
  */
-router.get('/compare', authenticate, validate(compareQuerySchema, { source: 'query' }), (req, res) => 
+router.get('/compare', authenticate, validate(compareQuerySchema, 'query'), (req, res) =>
     insightsController.compareMonths(req, res),
 );
 
