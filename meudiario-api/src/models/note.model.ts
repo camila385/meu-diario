@@ -1,83 +1,83 @@
-import type { Note as PrismaNote, Tag as PrismaTag, Mood as PrismaMood } from '@/generated/prisma'
+import type { Note as PrismaNote, Tag as PrismaTag, Mood as PrismaMood } from '@/generated/prisma';
 
-export type Note = PrismaNote
-export type Tag = PrismaTag
-export type Mood = PrismaMood
+export type Note = PrismaNote;
+export type Tag = PrismaTag;
+export type Mood = PrismaMood;
 
 export interface NoteSummary {
-  id: string
-  title: string
-  excerpt: string
-  tags: Tag[]
-  mood?: Mood | null
-  isPublic: boolean
-  createdAt: Date
+    id: string;
+    title: string;
+    excerpt: string;
+    tags: Tag[];
+    mood?: Mood | null;
+    isPublic: boolean;
+    createdAt: Date;
 }
 
 export interface NoteDetail {
-  id: string
-  title: string
-  content?: string | null
-  tags: Tag[]
-  mood?: Mood | null
-  isPublic: boolean
-  createdAt: Date
-  updatedAt: Date
-  owner: {
-    id: string
-    username: string
-  }
+    id: string;
+    title: string;
+    content?: string | null;
+    tags: Tag[];
+    mood?: Mood | null;
+    isPublic: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    owner: {
+        id: string;
+        username: string;
+    };
 }
 
 export const computeExcerpt = (content?: string | null): string => {
-  if (!content || content.trim().length === 0) {
-    return ''
-  }
-  const maxLength = 150
-  if (content.length <= maxLength) {
-    return content
-  }
-  const truncated = content.substring(0, maxLength)
-  const lastSpace = truncated.lastIndexOf(' ')
-  const trimmed = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated
-  return trimmed + '...'
-}
+    if (!content || content.trim().length === 0) {
+        return '';
+    }
+    const maxLength = 150;
+    if (content.length <= maxLength) {
+        return content;
+    }
+    const truncated = content.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    const trimmed = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
+    return trimmed + '...';
+};
 
 export const toNoteSummary = (
-  note: PrismaNote & { noteTags?: Array<{ tag: Tag }> | undefined }
+    note: PrismaNote & { noteTags?: Array<{ tag: Tag }> | undefined },
 ): NoteSummary => {
-  const tags = note.noteTags?.map((link) => link.tag) ?? []
-  return {
-    id: note.id,
-    title: note.title,
-    excerpt: computeExcerpt(note.content),
-    tags,
-    mood: undefined,
-    isPublic: note.isPublic,
-    createdAt: note.createdAt,
-  }
-}
+    const tags = note.noteTags?.map((link) => link.tag) ?? [];
+    return {
+        id: note.id,
+        title: note.title,
+        excerpt: computeExcerpt(note.content),
+        tags,
+        mood: undefined,
+        isPublic: note.isPublic,
+        createdAt: note.createdAt,
+    };
+};
 
 export const toNoteDetail = (
-  note: PrismaNote & {
-    user?: { id: string; username: string }
-    noteTags?: Array<{ tag: Tag }> | undefined
-    mood?: Mood | null
-  }
-): NoteDetail => {
-  const tags = note.noteTags?.map((link) => link.tag) ?? []
-  return {
-    id: note.id,
-    title: note.title,
-    content: note.content,
-    tags,
-    mood: note.mood ?? undefined,
-    isPublic: note.isPublic,
-    createdAt: note.createdAt,
-    updatedAt: note.updatedAt,
-    owner: {
-      id: note.user?.id ?? note.userId,
-      username: note.user?.username ?? 'Unknown',
+    note: PrismaNote & {
+        user?: { id: string; username: string };
+        noteTags?: Array<{ tag: Tag }> | undefined;
+        mood?: Mood | null;
     },
-  }
-}
+): NoteDetail => {
+    const tags = note.noteTags?.map((link) => link.tag) ?? [];
+    return {
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        tags,
+        mood: note.mood ?? undefined,
+        isPublic: note.isPublic,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        owner: {
+            id: note.user?.id ?? note.userId,
+            username: note.user?.username ?? 'Unknown',
+        },
+    };
+};

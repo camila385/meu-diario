@@ -1,11 +1,11 @@
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs';
 
-const SALT_ROUNDS = 12
+const SALT_ROUNDS = 12;
 
 export const hashPassword = (password: string): Promise<string> => {
-  return bcrypt.hash(password, SALT_ROUNDS)
-}
+    return bcrypt.hash(password, SALT_ROUNDS);
+};
 
 export const comparePassword = (password: string, hash: string): Promise<boolean> => {
-  return bcrypt.compare(password, hash)
-}
+    return bcrypt.compare(password, hash);
+};

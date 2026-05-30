@@ -22,15 +22,20 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Gamification fields moved to User
+  points       Int       @default(0)
+  level        Int       @default(1)
+  streak       Int       @default(0)
+  lastActivity DateTime?
+
   notes        Note[]
   moods        Mood[]
-  gamification Gamification?
   userBadges   UserBadge[]
   following    Follow[]      @relation("follower")
   followers    Follow[]      @relation("following")
-  reports      Report[]
   likes        Like[]
   comments     Comment[]
+  commentLikes CommentLike[]
 }
 
 model Note {
@@ -66,27 +71,15 @@ model NoteTag {
 }
 
 model Mood {
-  id     String   @id @default(uuid())
-  userId String
-  noteId String?  @unique
-  value  Int
-  date   DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  noteId    String?  @unique
+  value     Int
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date])
-}
-
-model Gamification {
-  id           String    @id @default(uuid())
-  userId       String    @unique
-  points       Int       @default(0)
-  level        Int       @default(1)
-  streak       Int       @default(0)
-  lastActivity DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Badge {
@@ -137,25 +130,18 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  note  Note          @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  likes CommentLike[]
 }
 
-enum TargetType {
-  note
-  comment
-  user
-}
+model CommentLike {
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
 
-model Report {
-  id         String     @id @default(uuid())
-  reporterId String
-  targetType TargetType
-  targetId   String
-  reason     String
-  createdAt  DateTime   @default(now())
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
-  reporter User @relation(fields: [reporterId], references: [id], onDelete: Cascade)
-
-  @@unique([reporterId, targetType, targetId, reason])
+  @@id([userId, commentId])
 }

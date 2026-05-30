@@ -1,19 +1,18 @@
-import { Router } from 'express'
-import { socialController } from '@/composition-root'
-import { authenticate } from '@/middlewares/auth.middleware'
-import { validate } from '@/middlewares/validate.middleware'
+import { Router } from 'express';
+import { socialController } from '@/composition-root';
+import { authenticate } from '@/middlewares/auth.middleware';
+import { validate } from '@/middlewares/validate.middleware';
 import {
-  feedQuerySchema,
-  userIdParamSchema,
-  noteIdParamSchema,
-  commentIdParamSchema,
-  createCommentSchema,
-  reportSchema,
-  usernameParamSchema,
-  followingListQuerySchema,
-} from '@/validators/social.validator'
+    feedQuerySchema,
+    userIdParamSchema,
+    noteIdParamSchema,
+    commentIdParamSchema,
+    createCommentSchema,
+    usernameParamSchema,
+    followingListQuerySchema,
+} from '@/validators/social.validator';
 
-const router = Router()
+const router = Router();
 
 /**
  * @swagger
@@ -107,7 +106,9 @@ const router = Router()
  *       "401":
  *         description: Unauthorized (missing JWT)
  */
-router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res) => socialController.getFeed(req, res))
+router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res) =>
+    socialController.getFeed(req, res),
+);
 
 /**
  * @swagger
@@ -150,12 +151,9 @@ router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res)
  *       "404":
  *         description: Note not found
  */
-router.post(
-  '/notes/:id/like',
-  authenticate,
-  validate(noteIdParamSchema, 'params'),
-  (req, res) => socialController.likeNote(req, res),
-)
+router.post('/notes/:id/like', authenticate, validate(noteIdParamSchema, 'params'), (req, res) =>
+    socialController.likeNote(req, res),
+);
 
 /**
  * @swagger
@@ -196,12 +194,9 @@ router.post(
  *       "404":
  *         description: Note not found
  */
-router.delete(
-  '/notes/:id/like',
-  authenticate,
-  validate(noteIdParamSchema, 'params'),
-  (req, res) => socialController.unlikeNote(req, res),
-)
+router.delete('/notes/:id/like', authenticate, validate(noteIdParamSchema, 'params'), (req, res) =>
+    socialController.unlikeNote(req, res),
+);
 
 // ====== FOLLOW / UNFOLLOW USERS ======
 
@@ -253,12 +248,9 @@ router.delete(
  *       "404":
  *         description: User not found
  */
-router.post(
-  '/users/:id/follow',
-  authenticate,
-  validate(userIdParamSchema, 'params'),
-  (req, res) => socialController.followUser(req, res),
-)
+router.post('/users/:id/follow', authenticate, validate(userIdParamSchema, 'params'), (req, res) =>
+    socialController.followUser(req, res),
+);
 
 /**
  * @swagger
@@ -295,11 +287,11 @@ router.post(
  *         description: User not found
  */
 router.delete(
-  '/users/:id/follow',
-  authenticate,
-  validate(userIdParamSchema, 'params'),
-  (req, res) => socialController.unfollowUser(req, res),
-)
+    '/users/:id/follow',
+    authenticate,
+    validate(userIdParamSchema, 'params'),
+    (req, res) => socialController.unfollowUser(req, res),
+);
 
 // ====== FOLLOWING / FOLLOWERS LISTS ======
 
@@ -334,11 +326,11 @@ router.delete(
  *         description: Unauthorized
  */
 router.get(
-  '/users/@me/following',
-  authenticate,
-  validate(followingListQuerySchema, 'query'),
-  (req, res) => socialController.getFollowing(req, res),
-)
+    '/users/@me/following',
+    authenticate,
+    validate(followingListQuerySchema, 'query'),
+    (req, res) => socialController.getFollowing(req, res),
+);
 
 /**
  * @swagger
@@ -371,11 +363,11 @@ router.get(
  *         description: Unauthorized
  */
 router.get(
-  '/users/@me/followers',
-  authenticate,
-  validate(followingListQuerySchema, 'query'),
-  (req, res) => socialController.getFollowers(req, res),
-)
+    '/users/@me/followers',
+    authenticate,
+    validate(followingListQuerySchema, 'query'),
+    (req, res) => socialController.getFollowers(req, res),
+);
 
 // ====== COMMENTS ======
 
@@ -418,12 +410,9 @@ router.get(
  *       "404":
  *         description: Note not found
  */
-router.get(
-  '/notes/:id/comments',
-  authenticate,
-  validate(noteIdParamSchema, 'params'),
-  (req, res) => socialController.getComments(req, res),
-)
+router.get('/notes/:id/comments', authenticate, validate(noteIdParamSchema, 'params'), (req, res) =>
+    socialController.getComments(req, res),
+);
 
 /**
  * @swagger
@@ -467,12 +456,12 @@ router.get(
  *         description: Note not found
  */
 router.post(
-  '/notes/:id/comments',
-  authenticate,
-  validate(noteIdParamSchema, 'params'),
-  validate(createCommentSchema, 'body'),
-  (req, res) => socialController.createComment(req, res),
-)
+    '/notes/:id/comments',
+    authenticate,
+    validate(noteIdParamSchema, 'params'),
+    validate(createCommentSchema, 'body'),
+    (req, res) => socialController.createComment(req, res),
+);
 
 /**
  * @swagger
@@ -502,23 +491,20 @@ router.post(
  *       "404":
  *         description: Comment not found
  */
-router.delete(
-  '/comments/:id',
-  authenticate,
-  validate(commentIdParamSchema, 'params'),
-  (req, res) => socialController.deleteComment(req, res),
-)
+router.delete('/comments/:id', authenticate, validate(commentIdParamSchema, 'params'), (req, res) =>
+    socialController.deleteComment(req, res),
+);
 
-// ====== REPORTS ======
+// ====== COMMENT LIKES ======
 
 /**
  * @swagger
- * /api/v1/notes/{id}/report:
+ * /api/v1/comments/{id}/like:
  *   post:
  *     tags:
  *       - Social
- *     summary: Report a note
- *     description: File a report on a note for moderation. Duplicate reports (same user, target, reason) are deduplicated.
+ *     summary: Like a comment
+ *     description: Create a like on a comment. Prevents double-like.
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -528,100 +514,56 @@ router.delete(
  *         schema:
  *           type: string
  *           format: uuid
- *         description: Note ID to report
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reason:
- *                 type: string
- *                 enum: [spam, inappropriate, harassment, other]
- *             required:
- *               - reason
+ *         description: Comment ID
  *     responses:
- *       "201":
- *         description: Report filed successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 data:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: string
- *                       format: uuid
- *                     createdAt:
- *                       type: string
- *                       format: date-time
+ *       "200":
+ *         description: Comment liked successfully
  *       "400":
- *         description: Invalid reason
- *       "401":
- *         description: Unauthorized
- *       "404":
- *         description: Note not found
- */
-router.post(
-  '/notes/:id/report',
-  authenticate,
-  validate(noteIdParamSchema, 'params'),
-  validate(reportSchema, 'body'),
-  (req, res) => socialController.reportNote(req, res),
-)
-
-/**
- * @swagger
- * /api/v1/comments/{id}/report:
- *   post:
- *     tags:
- *       - Social
- *     summary: Report a comment
- *     description: File a report on a comment for moderation.
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Comment ID to report
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               reason:
- *                 type: string
- *                 enum: [spam, inappropriate, harassment, other]
- *             required:
- *               - reason
- *     responses:
- *       "201":
- *         description: Report filed successfully
- *       "400":
- *         description: Invalid reason
+ *         description: Invalid request
  *       "401":
  *         description: Unauthorized
  *       "404":
  *         description: Comment not found
  */
 router.post(
-  '/comments/:id/report',
-  authenticate,
-  validate(commentIdParamSchema, 'params'),
-  validate(reportSchema, 'body'),
-  (req, res) => socialController.reportComment(req, res),
-)
+    '/comments/:id/like',
+    authenticate,
+    validate(commentIdParamSchema, 'params'),
+    (req, res) => socialController.likeComment(req, res),
+);
+
+/**
+ * @swagger
+ * /api/v1/comments/{id}/like:
+ *   delete:
+ *     tags:
+ *       - Social
+ *     summary: Unlike a comment
+ *     description: Remove a like from a comment.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Comment ID
+ *     responses:
+ *       "200":
+ *         description: Comment unliked successfully
+ *       "401":
+ *         description: Unauthorized
+ *       "404":
+ *         description: Comment not found
+ */
+router.delete(
+    '/comments/:id/like',
+    authenticate,
+    validate(commentIdParamSchema, 'params'),
+    (req, res) => socialController.unlikeComment(req, res),
+);
 
 // ====== PUBLIC PROFILES ======
 
@@ -678,10 +620,10 @@ router.post(
  *         description: User not found or profile is private
  */
 router.get(
-  '/users/username/:username',
-  authenticate,
-  validate(usernameParamSchema, 'params'),
-  (req, res) => socialController.getPublicProfile(req, res),
-)
+    '/users/username/:username',
+    authenticate,
+    validate(usernameParamSchema, 'params'),
+    (req, res) => socialController.getPublicProfile(req, res),
+);
 
-export default router
+export default router;

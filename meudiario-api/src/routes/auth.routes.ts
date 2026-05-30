@@ -1,10 +1,10 @@
-import { Router } from 'express'
-import { authController } from '@/composition-root'
-import { authenticate } from '@/middlewares/auth.middleware'
-import { validate } from '@/middlewares/validate.middleware'
-import { loginSchema, registerSchema } from '@/validators/auth.validator'
+import { Router } from 'express';
+import { authController } from '@/composition-root';
+import { authenticate } from '@/middlewares/auth.middleware';
+import { validate } from '@/middlewares/validate.middleware';
+import { loginSchema, registerSchema } from '@/validators/auth.validator';
 
-const router = Router()
+const router = Router();
 
 /**
  * @swagger
@@ -33,7 +33,7 @@ const router = Router()
  *       201:
  *         description: Conta criada com sucesso
  */
-router.post('/register', validate(registerSchema), (req, res) => authController.register(req, res))
+router.post('/register', validate(registerSchema), (req, res) => authController.register(req, res));
 
 /**
  * @swagger
@@ -59,7 +59,7 @@ router.post('/register', validate(registerSchema), (req, res) => authController.
  *       200:
  *         description: Login realizado com sucesso
  */
-router.post('/login', validate(loginSchema), (req, res) => authController.login(req, res))
+router.post('/login', validate(loginSchema), (req, res) => authController.login(req, res));
 
 /**
  * @swagger
@@ -73,6 +73,6 @@ router.post('/login', validate(loginSchema), (req, res) => authController.login(
  *       200:
  *         description: Perfil do usuário autenticado
  */
-router.get('/me', authenticate, (req, res) => authController.me(req, res))
+router.get('/me', authenticate, (req, res) => authController.me(req, res));
 
-export default router
+export default router;

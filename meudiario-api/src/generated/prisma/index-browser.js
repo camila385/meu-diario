@@ -128,7 +128,11 @@ exports.Prisma.UserScalarFieldEnum = {
   avatarUrl: 'avatarUrl',
   isPublic: 'isPublic',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  points: 'points',
+  level: 'level',
+  streak: 'streak',
+  lastActivity: 'lastActivity'
 };
 
 exports.Prisma.NoteScalarFieldEnum = {
@@ -156,16 +160,8 @@ exports.Prisma.MoodScalarFieldEnum = {
   userId: 'userId',
   noteId: 'noteId',
   value: 'value',
-  date: 'date'
-};
-
-exports.Prisma.GamificationScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  points: 'points',
-  level: 'level',
-  streak: 'streak',
-  lastActivity: 'lastActivity'
+  date: 'date',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.BadgeScalarFieldEnum = {
@@ -201,12 +197,9 @@ exports.Prisma.CommentScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
-exports.Prisma.ReportScalarFieldEnum = {
-  id: 'id',
-  reporterId: 'reporterId',
-  targetType: 'targetType',
-  targetId: 'targetId',
-  reason: 'reason',
+exports.Prisma.CommentLikeScalarFieldEnum = {
+  userId: 'userId',
+  commentId: 'commentId',
   createdAt: 'createdAt'
 };
 
@@ -224,11 +217,7 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-exports.TargetType = exports.$Enums.TargetType = {
-  note: 'note',
-  comment: 'comment',
-  user: 'user'
-};
+
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -236,13 +225,12 @@ exports.Prisma.ModelName = {
   Tag: 'Tag',
   NoteTag: 'NoteTag',
   Mood: 'Mood',
-  Gamification: 'Gamification',
   Badge: 'Badge',
   UserBadge: 'UserBadge',
   Follow: 'Follow',
   Like: 'Like',
   Comment: 'Comment',
-  Report: 'Report'
+  CommentLike: 'CommentLike'
 };
 
 /**

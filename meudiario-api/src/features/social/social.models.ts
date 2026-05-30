@@ -1,4 +1,4 @@
 export interface ReportResponse {
-  id: string
-  createdAt: Date
+    id: string;
+    createdAt: Date;
 }

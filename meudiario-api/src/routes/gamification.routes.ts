@@ -1,15 +1,15 @@
-import { Router } from 'express'
-import { gamificationController } from '@/composition-root'
-import { authenticate } from '@/middlewares/auth.middleware'
-import { validate } from '@/middlewares/validate.middleware'
+import { Router } from 'express';
+import { gamificationController } from '@/composition-root';
+import { authenticate } from '@/middlewares/auth.middleware';
+import { validate } from '@/middlewares/validate.middleware';
 import {
-	gamificationBadgeQuerySchema,
-	gamificationChallengeQuerySchema,
-	gamificationProgressQuerySchema,
-	gamificationRankingQuerySchema,
-} from '@/validators/gamification.validator'
+    gamificationBadgeQuerySchema,
+    gamificationChallengeQuerySchema,
+    gamificationProgressQuerySchema,
+    gamificationRankingQuerySchema,
+} from '@/validators/gamification.validator';
 
-const router = Router()
+const router = Router();
 
 /**
  * @swagger
@@ -24,7 +24,12 @@ const router = Router()
  *       '200':
  *         description: Gamification progress retrieved successfully
  */
-router.get('/progress', authenticate, validate(gamificationProgressQuerySchema, 'query'), (req, res) => gamificationController.progress(req, res))
+router.get(
+    '/progress',
+    authenticate,
+    validate(gamificationProgressQuerySchema, 'query'),
+    (req, res) => gamificationController.progress(req, res),
+);
 
 /**
  * @swagger
@@ -39,7 +44,9 @@ router.get('/progress', authenticate, validate(gamificationProgressQuerySchema, 
  *       '200':
  *         description: Badges retrieved successfully
  */
-router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'query'), (req, res) => gamificationController.badges(req, res))
+router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'query'), (req, res) =>
+    gamificationController.badges(req, res),
+);
 
 /**
  * @swagger
@@ -54,7 +61,12 @@ router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'quer
  *       '200':
  *         description: Weekly challenge retrieved successfully
  */
-router.get('/challenge/current', authenticate, validate(gamificationChallengeQuerySchema, 'query'), (req, res) => gamificationController.currentChallenge(req, res))
+router.get(
+    '/challenge/current',
+    authenticate,
+    validate(gamificationChallengeQuerySchema, 'query'),
+    (req, res) => gamificationController.currentChallenge(req, res),
+);
 
 /**
  * @swagger
@@ -69,6 +81,11 @@ router.get('/challenge/current', authenticate, validate(gamificationChallengeQue
  *       '200':
  *         description: Ranking retrieved successfully
  */
-router.get('/ranking', authenticate, validate(gamificationRankingQuerySchema, 'query'), (req, res) => gamificationController.ranking(req, res))
+router.get(
+    '/ranking',
+    authenticate,
+    validate(gamificationRankingQuerySchema, 'query'),
+    (req, res) => gamificationController.ranking(req, res),
+);
 
-export default router
+export default router;
