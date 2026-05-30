@@ -1,5 +1,6 @@
 import type { CreateNoteRequest, UpdateNoteRequest, ListNotesQuery } from '@/validators/notes.validator'
 import type { Note, Tag } from '@/models/note.model'
+import type { Comment } from '@/generated/prisma'
 import { prisma } from './prisma.client'
 
 export class NotesRepository {
@@ -199,7 +200,7 @@ export class NotesRepository {
   /**
    * Get comment by ID (for social operations)
    */
-  async getCommentById(commentId: string): Promise<any | null> {
+  async getCommentById(commentId: string): Promise<Comment | null> {
     return await prisma.comment.findUnique({
       where: { id: commentId },
     })

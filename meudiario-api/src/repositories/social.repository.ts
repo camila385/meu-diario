@@ -1,7 +1,11 @@
 import { prisma } from './prisma.client'
-import type { User, Note, Follow, Like, Comment, Report } from '@/generated/prisma'
+import type { Prisma, User, Note, Follow, Like, Comment, Report, TargetType } from '@/generated/prisma'
 
-type TargetType = 'note' | 'comment'
+type FeedNote = Note & {
+  user: Pick<User, 'id' | 'username' | 'avatarUrl'>
+  noteTags: Array<{ tag: { name: string } }>
+  _count: { likes: number; comments: number }
+}
 
 export class SocialRepository {
   // ====== FEED QUERIES (T011) ======
@@ -16,24 +20,17 @@ export class SocialRepository {
     limit: number,
     tag?: string,
   ): Promise<{
-    notes: Array<
-      Note & {
-        user: Pick<User, 'id' | 'username' | 'avatarUrl'>
-        noteTags: Array<{ tag: { name: string } }>
-        likeCount: number
-        commentCount: number
-      }
-    >
+    notes: Array<Omit<FeedNote, '_count'> & { likeCount: number; commentCount: number }>
     total: number
   }> {
     const skip = (page - 1) * limit
 
-    const where = {
+    const where: Prisma.NoteWhereInput = {
       isPublic: true,
       user: { is: { isPublic: true } },
       userId: { not: userId },
       noteTags: tag ? { some: { tag: { name: tag } } } : undefined,
-    } as any
+    }
 
     const [notes, total] = await Promise.all([
       prisma.note.findMany({
@@ -44,21 +41,22 @@ export class SocialRepository {
         include: {
           user: { select: { id: true, username: true, avatarUrl: true } },
           noteTags: { include: { tag: { select: { name: true } } } },
-          likes: true,
-          comments: true,
+          _count: { select: { likes: true, comments: true } },
         },
       }),
       prisma.note.count({ where }),
     ])
 
     return {
-      notes: notes.map((note) => ({
-        ...note,
-        likeCount: note.likes.length,
-        commentCount: note.comments.length,
-        likes: undefined as any,
-        comments: undefined as any,
-      })),
+      notes: notes.map((note) => {
+        const { _count, ...rest } = note
+
+        return {
+          ...rest,
+          likeCount: _count.likes,
+          commentCount: _count.comments,
+        }
+      }),
       total,
     }
   }
@@ -265,14 +263,14 @@ export class SocialRepository {
       where: {
         reporterId_targetType_targetId_reason: {
           reporterId,
-          targetType: targetType as any,
+          targetType,
           targetId,
           reason,
         },
       },
       create: {
         reporterId,
-        targetType: targetType as any,
+        targetType,
         targetId,
         reason,
       },
@@ -290,7 +288,7 @@ export class SocialRepository {
     reason?: string
   }): Promise<Report[]> {
     return await prisma.report.findMany({
-      where: where as any,
+      where,
     })
   }
 
@@ -300,7 +298,7 @@ export class SocialRepository {
   async deleteReportsForDeletedContent(targetType: TargetType, targetId: string): Promise<void> {
     await prisma.report.deleteMany({
       where: {
-        targetType: targetType as any,
+        targetType,
         targetId,
       },
     })

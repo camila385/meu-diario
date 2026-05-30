@@ -15,8 +15,6 @@ import {
 
 const router = Router()
 
-// ====== PUBLIC FEED ======
-
 /**
  * @swagger
  * /api/v1/feed:
@@ -109,14 +107,7 @@ const router = Router()
  *       "401":
  *         description: Unauthorized (missing JWT)
  */
-router.get(
-  '/feed',
-  authenticate,
-  validate(feedQuerySchema, 'query'),
-  (req, res) => socialController.getFeed(req, res),
-)
-
-// ====== LIKE / UNLIKE NOTES ======
+router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res) => socialController.getFeed(req, res))
 
 /**
  * @swagger
