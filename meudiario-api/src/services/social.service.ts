@@ -2,8 +2,6 @@ import type { SocialRepository } from '@/repositories/social.repository';
 import type { NotesRepository } from '@/repositories/notes.repository';
 import type { UsersRepository } from '@/repositories/users.repository';
 import {
-    computeExcerpt,
-    toISO8601,
     type FeedItemResponse,
     type FeedResponse,
     type FollowUserResponse,
@@ -16,6 +14,7 @@ import {
     type LikeCountResponse,
     type PaginationMeta,
 } from '@/models/social.model';
+import { computeExcerpt, toISO8601 } from '@/mappers/social.mapper';
 import { ConflictError, NotFoundError, ForbiddenError } from '@/errors';
 
 export class SocialService {
