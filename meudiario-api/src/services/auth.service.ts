@@ -26,7 +26,7 @@ export class AuthService {
 
         const passwordHash = await hashPassword(input.password);
 
-        const { user: createdUser } = await this.usersRepository.createWithGamification({
+        const createdUser = await this.usersRepository.create({
             email: input.email,
             username: input.username,
             passwordHash,
