@@ -106,9 +106,7 @@ const router = Router();
  *       "401":
  *         description: Unauthorized (missing JWT)
  */
-router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res) =>
-    socialController.getFeed(req, res),
-);
+router.get('/feed', authenticate, validate(feedQuerySchema, 'query'), (req, res) => socialController.getFeed(req, res));
 
 /**
  * @swagger
@@ -198,8 +196,6 @@ router.delete('/notes/:id/like', authenticate, validate(noteIdParamSchema, 'para
     socialController.unlikeNote(req, res),
 );
 
-// ====== FOLLOW / UNFOLLOW USERS ======
-
 /**
  * @swagger
  * /api/v1/users/{id}/follow:
@@ -286,14 +282,9 @@ router.post('/users/:id/follow', authenticate, validate(userIdParamSchema, 'para
  *       "404":
  *         description: User not found
  */
-router.delete(
-    '/users/:id/follow',
-    authenticate,
-    validate(userIdParamSchema, 'params'),
-    (req, res) => socialController.unfollowUser(req, res),
+router.delete('/users/:id/follow', authenticate, validate(userIdParamSchema, 'params'), (req, res) =>
+    socialController.unfollowUser(req, res),
 );
-
-// ====== FOLLOWING / FOLLOWERS LISTS ======
 
 /**
  * @swagger
@@ -325,11 +316,8 @@ router.delete(
  *       "401":
  *         description: Unauthorized
  */
-router.get(
-    '/users/@me/following',
-    authenticate,
-    validate(followingListQuerySchema, 'query'),
-    (req, res) => socialController.getFollowing(req, res),
+router.get('/users/@me/following', authenticate, validate(followingListQuerySchema, 'query'), (req, res) => 
+    socialController.getFollowing(req, res),
 );
 
 /**
@@ -362,14 +350,9 @@ router.get(
  *       "401":
  *         description: Unauthorized
  */
-router.get(
-    '/users/@me/followers',
-    authenticate,
-    validate(followingListQuerySchema, 'query'),
-    (req, res) => socialController.getFollowers(req, res),
+router.get('/users/@me/followers', authenticate, validate(followingListQuerySchema, 'query'), (req, res) => 
+    socialController.getFollowers(req, res),
 );
-
-// ====== COMMENTS ======
 
 /**
  * @swagger
@@ -455,11 +438,7 @@ router.get('/notes/:id/comments', authenticate, validate(noteIdParamSchema, 'par
  *       "404":
  *         description: Note not found
  */
-router.post(
-    '/notes/:id/comments',
-    authenticate,
-    validate(noteIdParamSchema, 'params'),
-    validate(createCommentSchema, 'body'),
+router.post('/notes/:id/comments', authenticate, validate(noteIdParamSchema, 'params'), validate(createCommentSchema, 'body'),
     (req, res) => socialController.createComment(req, res),
 );
 
@@ -495,8 +474,6 @@ router.delete('/comments/:id', authenticate, validate(commentIdParamSchema, 'par
     socialController.deleteComment(req, res),
 );
 
-// ====== COMMENT LIKES ======
-
 /**
  * @swagger
  * /api/v1/comments/{id}/like:
@@ -525,11 +502,8 @@ router.delete('/comments/:id', authenticate, validate(commentIdParamSchema, 'par
  *       "404":
  *         description: Comment not found
  */
-router.post(
-    '/comments/:id/like',
-    authenticate,
-    validate(commentIdParamSchema, 'params'),
-    (req, res) => socialController.likeComment(req, res),
+router.post('/comments/:id/like', authenticate, validate(commentIdParamSchema, 'params'), (req, res) => 
+    socialController.likeComment(req, res),
 );
 
 /**
@@ -558,14 +532,9 @@ router.post(
  *       "404":
  *         description: Comment not found
  */
-router.delete(
-    '/comments/:id/like',
-    authenticate,
-    validate(commentIdParamSchema, 'params'),
-    (req, res) => socialController.unlikeComment(req, res),
+router.delete('/comments/:id/like', authenticate, validate(commentIdParamSchema, 'params'), (req, res) => 
+    socialController.unlikeComment(req, res),
 );
-
-// ====== PUBLIC PROFILES ======
 
 /**
  * @swagger
@@ -619,11 +588,8 @@ router.delete(
  *       "404":
  *         description: User not found or profile is private
  */
-router.get(
-    '/users/username/:username',
-    authenticate,
-    validate(usernameParamSchema, 'params'),
-    (req, res) => socialController.getPublicProfile(req, res),
+router.get('/users/username/:username', authenticate, validate(usernameParamSchema, 'params'), (req, res) => 
+    socialController.getPublicProfile(req, res),
 );
 
 export default router;

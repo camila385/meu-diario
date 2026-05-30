@@ -43,9 +43,7 @@ const router = Router();
  *       '401':
  *         description: Unauthorized
  */
-router.post('/', authenticate, validate(createMoodSchema), (req, res) =>
-    moodsController.createMood(req, res),
-);
+router.post('/', authenticate, validate(createMoodSchema), (req, res) => moodsController.createMood(req, res));
 
 /**
  * @swagger
@@ -81,9 +79,7 @@ router.post('/', authenticate, validate(createMoodSchema), (req, res) =>
  *       '200':
  *         description: Mood history retrieved successfully
  */
-router.get('/', authenticate, validate(moodHistoryQuerySchema, 'query'), (req, res) =>
-    moodsController.listHistory(req, res),
-);
+router.get('/', authenticate, validate(moodHistoryQuerySchema, 'query'), (req, res) => moodsController.listHistory(req, res));
 
 /**
  * @swagger
@@ -126,7 +122,7 @@ router.get('/weekly', authenticate, (req, res) => moodsController.weeklySummary(
  *       '200':
  *         description: Monthly summary retrieved successfully
  */
-router.get('/monthly', authenticate, validate(monthlyMoodSummaryQuerySchema, 'query'), (req, res) =>
+router.get('/monthly', authenticate, validate(monthlyMoodSummaryQuerySchema, 'query'), (req, res) => 
     moodsController.monthlySummary(req, res),
 );
 

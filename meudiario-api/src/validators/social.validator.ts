@@ -12,13 +12,11 @@ export const followingListQuerySchema = paginationSchema;
 export type FollowingListQuery = z.infer<typeof followingListQuerySchema>;
 
 export const followUserSchema = z.object({
-    // No body required for PUT/POST follow
 });
 
 export type FollowUserRequest = z.infer<typeof followUserSchema>;
 
 export const unfollowUserSchema = z.object({
-    // No body required for DELETE unfollow
 });
 
 export type UnfollowUserRequest = z.infer<typeof unfollowUserSchema>;
@@ -40,8 +38,6 @@ export const reportSchema = z.object({
 });
 
 export type ReportRequest = z.infer<typeof reportSchema>;
-
-// ====== Param Schemas ======
 
 export const userIdParamSchema = uuidParamSchema;
 
@@ -66,16 +62,12 @@ export const usernameParamSchema = z.object({
 
 export type UsernameParam = z.infer<typeof usernameParamSchema>;
 
-// ====== Combined Route Schemas ======
-
 export const likeNoteSchema = z.object({
-    // No body required for POST like
 });
 
 export type LikeNoteRequest = z.infer<typeof likeNoteSchema>;
 
 export const unlikeNoteSchema = z.object({
-    // No body required for DELETE unlike
 });
 
 export type UnlikeNoteRequest = z.infer<typeof unlikeNoteSchema>;

@@ -29,14 +29,12 @@ export class SocialService {
         console.log(`[social] ${operation}`, payload);
     }
 
-    // ====== FEED ======
-
     async getFeed(
         userId: string,
         query: { page?: number; limit?: number; tag?: string },
     ): Promise<FeedResponse> {
         const page = query.page ?? 1;
-        const limit = Math.min(query.limit ?? 20, 100); // Cap at 100
+        const limit = Math.min(query.limit ?? 20, 100);
         const tag = query.tag;
 
         const { notes, total } = await this.socialRepository.getFeedNotes(userId, page, limit, tag);
@@ -63,21 +61,16 @@ export class SocialService {
         };
     }
 
-    // ====== FOLLOWS ======
-
     async followUser(userId: string, targetUserId: string): Promise<FollowUserResponse> {
-        // Prevent self-follow (400 error)
         if (userId === targetUserId) {
             throw new ConflictError('Você não pode seguir a si mesmo.');
         }
 
-        // Verify target user exists
         const targetUser = await this.usersRepository.findById(targetUserId);
         if (!targetUser) {
             throw new NotFoundError('Usuário não encontrado.');
         }
 
-        // Upsert follow (idempotent)
         await this.socialRepository.upsertFollow(userId, targetUserId);
         this.logOperation('follow', { userId, targetUserId });
 
@@ -90,13 +83,11 @@ export class SocialService {
     }
 
     async unfollowUser(userId: string, targetUserId: string): Promise<void> {
-        // Verify target user exists
         const targetUser = await this.usersRepository.findById(targetUserId);
         if (!targetUser) {
             throw new NotFoundError('Usuário não encontrado.');
         }
 
-        // Delete follow (idempotent - doesn't error if not following)
         await this.socialRepository.deleteFollow(userId, targetUserId);
         this.logOperation('unfollow', { userId, targetUserId });
     }
@@ -139,21 +130,16 @@ export class SocialService {
         return { success: true, data, meta: { page, limit, total } };
     }
 
-    // ====== LIKES ======
-
     async likeNote(userId: string, noteId: string): Promise<LikeCountResponse> {
-        // Verify note exists and is public
         const note = await this.notesRepository.getById(noteId);
         if (!note || !note.isPublic) {
             throw new NotFoundError('Nota não encontrada.');
         }
 
-        // Prevent self-like (400 error)
         if (note.userId === userId) {
             throw new ConflictError('Você não pode dar like na sua própria nota.');
         }
 
-        // Upsert like (idempotent)
         await this.socialRepository.upsertLike(userId, noteId);
         this.logOperation('like', { userId, noteId });
 
@@ -163,13 +149,11 @@ export class SocialService {
     }
 
     async unlikeNote(userId: string, noteId: string): Promise<LikeCountResponse> {
-        // Verify note exists
         const note = await this.notesRepository.getById(noteId);
         if (!note) {
             throw new NotFoundError('Nota não encontrada.');
         }
 
-        // Delete like (idempotent)
         await this.socialRepository.deleteLike(userId, noteId);
         this.logOperation('unlike', { userId, noteId });
 
@@ -178,13 +162,10 @@ export class SocialService {
         return { success: true, data: { likeCount } };
     }
 
-    // ====== COMMENTS ======
-
     async getComments(
         noteId: string,
         query: { page?: number; limit?: number; requestingUserId?: string },
     ): Promise<CommentListResponse> {
-        // Verify note exists and is public
         const note = await this.notesRepository.getById(noteId);
         if (!note || !note.isPublic) {
             throw new NotFoundError('Nota não encontrada.');
@@ -224,18 +205,15 @@ export class SocialService {
         noteId: string,
         content: string,
     ): Promise<CreateCommentResponse> {
-        // Verify note exists and is public
         const note = await this.notesRepository.getById(noteId);
         if (!note || !note.isPublic) {
             throw new NotFoundError('Nota não encontrada.');
         }
 
-        // Validate content length (max 500 chars)
         if (content.length > 500) {
             throw new ConflictError('O comentário não pode exceder 500 caracteres.');
         }
 
-        // Create comment
         const comment = await this.socialRepository.createComment(userId, noteId, content);
         this.logOperation('comment:create', { userId, noteId });
 
@@ -257,23 +235,18 @@ export class SocialService {
     }
 
     async deleteComment(userId: string, commentId: string): Promise<void> {
-        // Get comment to verify ownership
         const comment = await this.notesRepository.getCommentById(commentId);
         if (!comment) {
             throw new NotFoundError('Comentário não encontrado.');
         }
 
-        // Verify ownership (403 if not owner)
         if (comment.userId !== userId) {
             throw new ForbiddenError('Você só pode deletar seus próprios comentários.');
         }
 
-        // Delete comment
         await this.socialRepository.deleteComment(commentId);
         this.logOperation('comment:delete', { userId, commentId });
     }
-
-    // ====== COMMENT LIKES ======
 
     async likeComment(userId: string, commentId: string): Promise<LikeCountResponse> {
         const comment = await this.notesRepository.getCommentById(commentId);
@@ -303,16 +276,12 @@ export class SocialService {
         return { success: true, data: { likeCount } };
     }
 
-    // ====== PUBLIC PROFILES ======
-
     async getPublicProfile(userId: string, username: string): Promise<ProfileDetailResponse> {
-        // Get user by username
         const user = await this.socialRepository.getUserByUsername(username);
         if (!user || !user.isPublic) {
             throw new NotFoundError('Perfil não encontrado.');
         }
 
-        // Get engagement stats
         const [followerCount, followingCount, publicNoteCount, isFollowing] = await Promise.all([
             this.socialRepository.getFollowerCount(user.id),
             this.socialRepository.getFollowingCount(user.id),

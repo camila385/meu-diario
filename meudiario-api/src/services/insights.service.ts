@@ -47,7 +47,6 @@ function computeStreakFromDates(dates: string[]): { maxStreak: number; currentSt
     const set = new Set(days);
     let maxStreak = 0;
     let currentStreak = 0;
-    // compute max streak
     for (const day of days) {
         if (!set.has(day - 1)) {
             let len = 0;
@@ -59,7 +58,6 @@ function computeStreakFromDates(dates: string[]): { maxStreak: number; currentSt
             if (len > maxStreak) maxStreak = len;
         }
     }
-    // compute current streak ending at latest day
     const latest = Math.max(...days);
     let cur = latest;
     while (set.has(cur)) {
@@ -112,7 +110,6 @@ export class InsightsService {
         const prevYear = month === 1 ? year - 1 : year;
         const prev = await this.repo.getMonthMetrics(userId, prevYear, prevMonth);
 
-        // compute streaks
         const baseStreaks = computeStreakFromDates(base.dates);
         const prevStreaks = computeStreakFromDates(prev.dates);
 

@@ -2,13 +2,10 @@ import { ConflictError } from '@/errors/ConflictError';
 import { NotFoundError } from '@/errors/NotFoundError';
 import { UnauthorizedError } from '@/errors/UnauthorizedError';
 import { comparePassword, hashPassword } from '@/utils/hash';
+import { signToken } from '@/utils/jwt';
 import type { UsersRepository } from '@/repositories/users.repository';
-import {
-    buildAuthResponse,
-    toProfileResponse,
-    type AuthResponse,
-    type UserProfileResponse,
-} from '@/models/user.model';
+import { toProfileResponse } from '@/mappers/user.mapper';
+import type { AuthResponse, UserProfileResponse } from '@/models/user.model';
 import type { LoginDTO, RegisterDTO } from '@/validators/auth.validator';
 
 export class AuthService {
@@ -32,7 +29,10 @@ export class AuthService {
             passwordHash,
         });
 
-        return buildAuthResponse(createdUser);
+        return {
+            token: signToken({ userId: createdUser.id }),
+            user: toProfileResponse(createdUser),
+        };
     }
 
     async login(input: LoginDTO): Promise<AuthResponse> {
@@ -48,7 +48,10 @@ export class AuthService {
             throw new UnauthorizedError('E-mail ou senha inválidos.');
         }
 
-        return buildAuthResponse(user);
+        return {
+            token: signToken({ userId: user.id }),
+            user: toProfileResponse(user),
+        };
     }
 
     async getProfile(userId: string): Promise<UserProfileResponse> {

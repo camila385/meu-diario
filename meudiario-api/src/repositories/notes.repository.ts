@@ -231,11 +231,7 @@ export class NotesRepository {
         });
         return note ? note.userId === userId : false;
     }
-    // ====== SOCIAL FEED HELPERS ======
 
-    /**
-     * Get note without user context (for social feed - checks isPublic independently)
-     */
     async getById(noteId: string): Promise<Note | null> {
         return await prisma.note.findUnique({
             where: { id: noteId },
@@ -247,9 +243,6 @@ export class NotesRepository {
         });
     }
 
-    /**
-     * Get comment by ID (for social operations)
-     */
     async getCommentById(commentId: string): Promise<Comment | null> {
         return await prisma.comment.findUnique({
             where: { id: commentId },

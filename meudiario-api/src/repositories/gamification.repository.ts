@@ -12,7 +12,6 @@ export class GamificationRepository {
     async createForUser(
         userId: string,
     ): Promise<{ id: string; points: number; level: number; streak: number }> {
-        // noop: user already contains gamification fields; ensure defaults
         await prisma.user.update({ where: { id: userId }, data: {} }).catch(() => null);
         const user = await prisma.user.findUnique({ where: { id: userId } });
         return {

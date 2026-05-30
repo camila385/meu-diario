@@ -24,11 +24,8 @@ const router = Router();
  *       '200':
  *         description: Gamification progress retrieved successfully
  */
-router.get(
-    '/progress',
-    authenticate,
-    validate(gamificationProgressQuerySchema, 'query'),
-    (req, res) => gamificationController.progress(req, res),
+router.get('/progress', authenticate, validate(gamificationProgressQuerySchema, 'query'), (req, res) => 
+    gamificationController.progress(req, res),
 );
 
 /**
@@ -61,11 +58,8 @@ router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'quer
  *       '200':
  *         description: Weekly challenge retrieved successfully
  */
-router.get(
-    '/challenge/current',
-    authenticate,
-    validate(gamificationChallengeQuerySchema, 'query'),
-    (req, res) => gamificationController.currentChallenge(req, res),
+router.get('/challenge/current', authenticate, validate(gamificationChallengeQuerySchema, 'query'), (req, res) => 
+    gamificationController.currentChallenge(req, res),
 );
 
 /**
@@ -81,11 +75,8 @@ router.get(
  *       '200':
  *         description: Ranking retrieved successfully
  */
-router.get(
-    '/ranking',
-    authenticate,
-    validate(gamificationRankingQuerySchema, 'query'),
-    (req, res) => gamificationController.ranking(req, res),
+router.get('/ranking', authenticate, validate(gamificationRankingQuerySchema, 'query'), (req, res) => 
+    gamificationController.ranking(req, res),
 );
 
 export default router;

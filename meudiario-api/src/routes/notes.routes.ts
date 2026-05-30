@@ -100,9 +100,7 @@ const router = Router();
  *       "401":
  *         description: Unauthorized (missing or invalid token)
  */
-router.post('/', authenticate, validate(createNoteSchema), (req, res) =>
-    notesController.createNote(req, res),
-);
+router.post('/', authenticate, validate(createNoteSchema), (req, res) => notesController.createNote(req, res));
 
 /**
  * @swagger
@@ -238,9 +236,7 @@ router.post('/', authenticate, validate(createNoteSchema), (req, res) =>
  *       "401":
  *         description: Unauthorized (missing or invalid token)
  */
-router.get('/', authenticate, validate(listNotesQuerySchema), (req, res) =>
-    notesController.listNotes(req, res),
-);
+router.get('/', authenticate, validate(listNotesQuerySchema), (req, res) => notesController.listNotes(req, res));
 
 /**
  * @swagger
@@ -361,14 +357,8 @@ router.get('/', authenticate, validate(listNotesQuerySchema), (req, res) =>
  *       "404":
  *         description: Note not found
  */
-router.get('/:id', authenticate, validate(noteIdParamSchema), (req, res) =>
-    notesController.getNoteById(req, res),
-);
-router.patch('/:id', authenticate, validate(updateNoteSchema), (req, res) =>
-    notesController.updateNote(req, res),
-);
-router.delete('/:id', authenticate, validate(noteIdParamSchema), (req, res) =>
-    notesController.deleteNote(req, res),
-);
+router.get('/:id', authenticate, validate(noteIdParamSchema), (req, res) => notesController.getNoteById(req, res));
+router.patch('/:id', authenticate, validate(updateNoteSchema), (req, res) => notesController.updateNote(req, res));
+router.delete('/:id', authenticate, validate(noteIdParamSchema), (req, res) => notesController.deleteNote(req, res));
 
 export default router;

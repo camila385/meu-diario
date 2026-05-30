@@ -1,15 +1,11 @@
 import type { User, Note, Follow, Like, Comment } from '@/generated/prisma';
 
-// ====== Re-exports of Prisma types ======
-
 export type { User, Note, Follow, Like, Comment };
-
-// ====== Feed Item Response DTO ======
 
 export interface FeedItemResponse {
     id: string;
     title: string;
-    excerpt: string; // first 150 chars of content
+    excerpt: string;
     tags: string[];
     author: {
         id: string;
@@ -18,10 +14,8 @@ export interface FeedItemResponse {
     };
     likeCount: number;
     commentCount: number;
-    createdAt: string; // ISO8601
+    createdAt: string;
 }
-
-// ====== Pagination Metadata ======
 
 export interface PaginationMeta {
     page: number;
@@ -34,8 +28,6 @@ export interface FeedResponse {
     data: FeedItemResponse[];
     meta: PaginationMeta;
 }
-
-// ====== Follow User Response DTO ======
 
 export interface FollowUserResponse {
     id: string;
@@ -50,8 +42,6 @@ export interface FollowListResponse {
     meta: PaginationMeta;
 }
 
-// ====== Comment Response DTOs ======
-
 export interface CommentDetailResponse {
     id: string;
     content: string;
@@ -60,7 +50,7 @@ export interface CommentDetailResponse {
         username: string;
         avatarUrl: string | null;
     };
-    createdAt: string; // ISO8601
+    createdAt: string;
     likesCount: number;
     likedByMe: boolean;
 }
@@ -76,30 +66,24 @@ export interface CreateCommentResponse {
     data: CommentDetailResponse;
 }
 
-// ====== Profile Response DTOs ======
-
 export interface ProfileDetailResponse {
     id: string;
     username: string;
     avatarUrl: string | null;
     isPublic: boolean;
-    followerCount: number; // total count including private followers
-    followingCount: number; // total count including private following
-    publicNoteCount: number; // count of notes where isPublic = true
-    isFollowing: boolean; // is authenticated user following this profile?
+    followerCount: number;
+    followingCount: number;
+    publicNoteCount: number;
+    isFollowing: boolean;
 }
-
-// ====== Report Response DTO ======
 
 export interface ReportResponse {
     success: boolean;
     data: {
         id: string;
-        createdAt: string; // ISO8601
+        createdAt: string;
     };
 }
-
-// ====== Like Response DTO ======
 
 export interface LikeCountResponse {
     success: boolean;
@@ -107,8 +91,6 @@ export interface LikeCountResponse {
         likeCount: number;
     };
 }
-
-// ====== Helper: Excerpt Truncation ======
 
 export const computeExcerpt = (content: string | null | undefined): string => {
     if (!content || content.trim().length === 0) {
@@ -123,8 +105,6 @@ export const computeExcerpt = (content: string | null | undefined): string => {
     const trimmed = lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated;
     return trimmed + '...';
 };
-
-// ====== Helper: Format Date to ISO8601 ======
 
 export const toISO8601 = (date: Date | string): string => {
     if (typeof date === 'string') return date;

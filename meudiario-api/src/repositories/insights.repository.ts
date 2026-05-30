@@ -54,7 +54,6 @@ export class InsightsRepository {
       GROUP BY weekday
       ORDER BY weekday
     `;
-        // ensure all weekdays 0..6 present
         const map = new Map<number, number>(rows.map((r) => [r.weekday, r.count]));
         const result: Array<{ weekday: number; count: number }> = [];
         for (let d = 0; d < 7; d++) {

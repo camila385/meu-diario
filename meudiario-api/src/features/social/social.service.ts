@@ -5,7 +5,6 @@ export class SocialService {
     private repo = new SocialRepository();
 
     async createReport(dto: CreateReportDTO) {
-        // Business rules and validations (beyond Zod) go here in future
         return this.repo.createReport(dto);
     }
 }
