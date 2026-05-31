@@ -1,15 +1,10 @@
 import { prisma } from './prisma.client';
-import type { Prisma, User, Note, Follow, Like, Comment } from '@/generated/prisma';
+import type { Prisma, User, Note, Follow, Like } from '@/generated/prisma';
 
 type FeedNote = Note & {
     user: Pick<User, 'id' | 'username' | 'avatarUrl'>;
     noteTags: Array<{ tag: { name: string } }>;
     _count: { likes: number; comments: number };
-};
-
-type CommentWithUserCount = Comment & {
-    user: Pick<User, 'id' | 'username' | 'avatarUrl'>;
-    _count?: { likes?: number };
 };
 
 export class SocialRepository {
@@ -171,79 +166,6 @@ export class SocialRepository {
         return !!follow;
     }
 
-    async createComment(
-        userId: string,
-        noteId: string,
-        content: string,
-    ): Promise<Comment & { user: Pick<User, 'id' | 'username' | 'avatarUrl'> }> {
-        return await prisma.comment.create({
-            data: { userId, noteId, content },
-            include: { user: { select: { id: true, username: true, avatarUrl: true } } },
-        });
-    }
-
-    async getComments(
-        noteId: string,
-        page: number,
-        limit: number,
-    ): Promise<{
-        comments: Array<CommentWithUserCount>;
-        total: number;
-    }> {
-        const skip = (page - 1) * limit;
-
-        const [comments, total] = await Promise.all([
-            prisma.comment.findMany({
-                where: { noteId },
-                include: {
-                    user: { select: { id: true, username: true, avatarUrl: true } },
-                    _count: { select: { likes: true } },
-                },
-                orderBy: { createdAt: 'asc' },
-                take: limit,
-                skip,
-            }),
-            prisma.comment.count({ where: { noteId } }),
-        ]);
-
-        return { comments, total };
-    }
-
-    async deleteComment(commentId: string): Promise<Comment> {
-        return await prisma.comment.delete({ where: { id: commentId } });
-    }
-
-    async getCommentCount(noteId: string): Promise<number> {
-        return await prisma.comment.count({ where: { noteId } });
-    }
-
-    async upsertCommentLike(userId: string, commentId: string): Promise<void> {
-        await prisma.commentLike
-            .upsert({
-                where: { userId_commentId: { userId, commentId } },
-                create: { userId, commentId },
-                update: {},
-            })
-            .catch(() => null);
-    }
-
-    async deleteCommentLike(userId: string, commentId: string): Promise<void> {
-        await prisma.commentLike
-            .delete({ where: { userId_commentId: { userId, commentId } } })
-            .catch(() => null);
-    }
-
-    async getCommentLikeCount(commentId: string): Promise<number> {
-        return await prisma.commentLike.count({ where: { commentId } });
-    }
-
-    async hasUserLikedComment(userId: string, commentId: string): Promise<boolean> {
-        const like = await prisma.commentLike.findUnique({
-            where: { userId_commentId: { userId, commentId } },
-        });
-        return !!like;
-    }
-
     async getUserByUsername(username: string): Promise<User | null> {
         return await prisma.user.findUnique({ where: { username } });
     }
@@ -254,11 +176,4 @@ export class SocialRepository {
         });
     }
 
-    async getEngagementStats(noteId: string): Promise<{ likeCount: number; commentCount: number }> {
-        const [likeCount, commentCount] = await Promise.all([
-            this.getLikeCount(noteId),
-            this.getCommentCount(noteId),
-        ]);
-        return { likeCount, commentCount };
-    }
 }

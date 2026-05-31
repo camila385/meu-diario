@@ -2,6 +2,7 @@ import { UsersRepository } from '@/repositories/users.repository';
 import { GamificationRepository } from '@/repositories/gamification.repository';
 import { NotesRepository } from '@/repositories/notes.repository';
 import { MoodsRepository } from '@/repositories/moods.repository';
+import { CommentsRepository } from '@/repositories/comments.repository';
 import { SocialRepository } from '@/repositories/social.repository';
 import { InsightsRepository } from '@/repositories/insights.repository';
 import { AuthService } from '@/services/auth.service';
@@ -21,6 +22,7 @@ const usersRepository = new UsersRepository();
 const gamificationRepository = new GamificationRepository();
 const notesRepository = new NotesRepository();
 const moodsRepository = new MoodsRepository();
+const commentsRepository = new CommentsRepository();
 const socialRepository = new SocialRepository();
 const insightsRepository = new InsightsRepository();
 
@@ -32,7 +34,12 @@ const gamificationService = new GamificationService(
     moodsRepository,
 );
 const notesService = new NotesService(notesRepository, gamificationService);
-const socialService = new SocialService(socialRepository, notesRepository, usersRepository);
+const socialService = new SocialService(
+    socialRepository,
+    notesRepository,
+    commentsRepository,
+    usersRepository,
+);
 const insightsService = new InsightsService(insightsRepository);
 
 export const authController = new AuthController(authService);

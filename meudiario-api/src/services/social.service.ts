@@ -1,5 +1,6 @@
 import type { SocialRepository } from '@/repositories/social.repository';
 import type { NotesRepository } from '@/repositories/notes.repository';
+import type { CommentsRepository } from '@/repositories/comments.repository';
 import type { UsersRepository } from '@/repositories/users.repository';
 import {
     type FeedItemResponse,
@@ -21,6 +22,7 @@ export class SocialService {
     constructor(
         private readonly socialRepository: SocialRepository,
         private readonly notesRepository: NotesRepository,
+        private readonly commentsRepository: CommentsRepository,
         private readonly usersRepository: UsersRepository,
     ) {}
 
@@ -174,13 +176,13 @@ export class SocialService {
         const limit = Math.min(query.limit ?? 20, 100);
         const requestingUserId = query.requestingUserId;
 
-        const { comments, total } = await this.socialRepository.getComments(noteId, page, limit);
+        const { comments, total } = await this.commentsRepository.getComments(noteId, page, limit);
 
         const data: CommentDetailResponse[] = [];
         for (const comment of comments) {
             const likeCount = comment._count?.likes ?? 0;
             const likedByMe = requestingUserId
-                ? await this.socialRepository.hasUserLikedComment(requestingUserId, comment.id)
+                ? await this.commentsRepository.hasUserLikedComment(requestingUserId, comment.id)
                 : false;
             data.push({
                 id: comment.id,
@@ -213,7 +215,7 @@ export class SocialService {
             throw new ConflictError('O comentário não pode exceder 500 caracteres.');
         }
 
-        const comment = await this.socialRepository.createComment(userId, noteId, content);
+        const comment = await this.commentsRepository.createComment(userId, noteId, content);
         this.logOperation('comment:create', { userId, noteId });
 
         return {
@@ -234,7 +236,7 @@ export class SocialService {
     }
 
     async deleteComment(userId: string, commentId: string): Promise<void> {
-        const comment = await this.notesRepository.getCommentById(commentId);
+        const comment = await this.commentsRepository.getCommentById(commentId);
         if (!comment) {
             throw new NotFoundError('Comentário não encontrado.');
         }
@@ -243,35 +245,35 @@ export class SocialService {
             throw new ForbiddenError('Você só pode deletar seus próprios comentários.');
         }
 
-        await this.socialRepository.deleteComment(commentId);
+        await this.commentsRepository.deleteComment(commentId);
         this.logOperation('comment:delete', { userId, commentId });
     }
 
     async likeComment(userId: string, commentId: string): Promise<LikeCountResponse> {
-        const comment = await this.notesRepository.getCommentById(commentId);
+        const comment = await this.commentsRepository.getCommentById(commentId);
         if (!comment) throw new NotFoundError('Comentário não encontrado.');
 
-        const already = await this.socialRepository.hasUserLikedComment(userId, commentId);
+        const already = await this.commentsRepository.hasUserLikedComment(userId, commentId);
         if (already) throw new ConflictError('Comentário já curtido.');
 
-        await this.socialRepository.upsertCommentLike(userId, commentId);
+        await this.commentsRepository.upsertCommentLike(userId, commentId);
         this.logOperation('likeComment', { userId, commentId });
 
-        const likeCount = await this.socialRepository.getCommentLikeCount(commentId);
+        const likeCount = await this.commentsRepository.getCommentLikeCount(commentId);
         return { success: true, data: { likeCount } };
     }
 
     async unlikeComment(userId: string, commentId: string): Promise<LikeCountResponse> {
-        const comment = await this.notesRepository.getCommentById(commentId);
+        const comment = await this.commentsRepository.getCommentById(commentId);
         if (!comment) throw new NotFoundError('Comentário não encontrado.');
 
-        const already = await this.socialRepository.hasUserLikedComment(userId, commentId);
+        const already = await this.commentsRepository.hasUserLikedComment(userId, commentId);
         if (!already) throw new NotFoundError('Comentário não curtido.');
 
-        await this.socialRepository.deleteCommentLike(userId, commentId);
+        await this.commentsRepository.deleteCommentLike(userId, commentId);
         this.logOperation('unlikeComment', { userId, commentId });
 
-        const likeCount = await this.socialRepository.getCommentLikeCount(commentId);
+        const likeCount = await this.commentsRepository.getCommentLikeCount(commentId);
         return { success: true, data: { likeCount } };
     }
 

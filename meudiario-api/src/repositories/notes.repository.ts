@@ -3,21 +3,24 @@ import type {
     UpdateNoteRequest,
     ListNotesQuery,
 } from '@/validators/notes.validator';
-import type { Note, Tag } from '@/models/note.model';
-import type { Comment } from '@/generated/prisma';
+import type { Note, Tag, Mood } from '@/models/note.model';
+import type { Prisma } from '@/generated/prisma';
 import { prisma } from './prisma.client';
 
+type NoteWithRelations = Note & {
+    user: { id: string; username: string };
+    noteTags: Array<{ tag: Tag }>;
+    mood: Mood | null;
+};
+
+const noteInclude = {
+    user: { select: { id: true, username: true } },
+    noteTags: { include: { tag: true } },
+    mood: true,
+} as const;
+
 export class NotesRepository {
-    async createNote(
-        userId: string,
-        input: CreateNoteRequest,
-    ): Promise<
-        Note & {
-            user: { id: string; username: string };
-            noteTags: Array<{ tag: Tag }>;
-            mood: any;
-        }
-    > {
+    async createNote(userId: string, input: CreateNoteRequest): Promise<NoteWithRelations> {
         return await prisma.$transaction(async (tx) => {
             const note = await tx.note.create({
                 data: {
@@ -28,80 +31,26 @@ export class NotesRepository {
                 },
             });
 
-            if (input.tags && input.tags.length > 0) {
-                const uniqueNames = [...new Set(input.tags)].slice(0, 10);
-
-                const existing = await tx.tag.findMany({ where: { name: { in: uniqueNames } } });
-                const existingNames = new Set(existing.map((t) => t.name));
-
-                const toCreate = uniqueNames.filter((n) => !existingNames.has(n));
-                if (toCreate.length > 0) {
-                    await tx.tag.createMany({
-                        data: toCreate.map((name) => ({ name })),
-                        skipDuplicates: true,
-                    });
-                }
-
-                const tags = await tx.tag.findMany({ where: { name: { in: uniqueNames } } });
-                if (tags.length > 0) {
-                    await tx.noteTag.createMany({
-                        data: tags.map((t) => ({ noteId: note.id, tagId: t.id })),
-                        skipDuplicates: true,
-                    });
-                }
+            if (input.tags.length > 0) {
+                await this.replaceTags(tx, note.id, input.tags);
             }
 
-            if (input.mood) {
+            if (input.mood !== undefined) {
                 await tx.mood.create({ data: { userId, noteId: note.id, value: input.mood } });
             }
 
             return await tx.note.findUniqueOrThrow({
                 where: { id: note.id },
-                include: {
-                    user: { select: { id: true, username: true } },
-                    noteTags: { include: { tag: true } },
-                    mood: true,
-                },
+                include: noteInclude,
             });
         });
-    }
-
-    async getOrCreateTags(tagNames: string[]): Promise<Tag[]> {
-        if (tagNames.length === 0) return [];
-
-        const uniqueNames = [...new Set(tagNames)].slice(0, 10);
-
-        const existing = await prisma.tag.findMany({ where: { name: { in: uniqueNames } } });
-        const existingNames = new Set(existing.map((t) => t.name));
-
-        const toCreate = uniqueNames.filter((name) => !existingNames.has(name));
-        if (toCreate.length > 0) {
-            await prisma.tag.createMany({
-                data: toCreate.map((name) => ({ name })),
-                skipDuplicates: true,
-            });
-        }
-
-        return await prisma.tag.findMany({ where: { name: { in: uniqueNames } } });
-    }
-
-    async linkTagsToNote(noteId: string, tagIds: string[]): Promise<void> {
-        if (tagIds.length === 0) return;
-        await prisma.noteTag.createMany({
-            data: tagIds.map((tagId) => ({ noteId, tagId })),
-            skipDuplicates: true,
-        });
-    }
-
-    async clearNoteTags(noteId: string): Promise<void> {
-        await prisma.noteTag.deleteMany({ where: { noteId } });
     }
 
     async listNotes(
         userId: string,
         query: ListNotesQuery,
-    ): Promise<{ notes: Note[]; total: number }> {
-        const where: any = {
+    ): Promise<{ notes: NoteWithRelations[]; total: number }> {
+        const where: Prisma.NoteWhereInput = {
             userId,
             ...(query.tag && {
                 noteTags: { some: { tag: { name: query.tag } } },
@@ -115,16 +64,16 @@ export class NotesRepository {
             }),
             ...(query.dateFrom &&
                 query.dateTo && {
-                    createdAt: { gte: new Date(query.dateFrom), lte: new Date(query.dateTo) },
-                }),
+                createdAt: { gte: new Date(query.dateFrom), lte: new Date(query.dateTo) },
+            }),
             ...(query.dateFrom &&
                 !query.dateTo && {
-                    createdAt: { gte: new Date(query.dateFrom) },
-                }),
+                createdAt: { gte: new Date(query.dateFrom) },
+            }),
             ...(!query.dateFrom &&
                 query.dateTo && {
-                    createdAt: { lte: new Date(query.dateTo) },
-                }),
+                createdAt: { lte: new Date(query.dateTo) },
+            }),
         };
 
         const total = await prisma.note.count({ where });
@@ -151,14 +100,10 @@ export class NotesRepository {
         return { notes, total };
     }
 
-    async getNoteById(noteId: string, userId: string): Promise<Note | null> {
+    async getNoteById(noteId: string, userId: string): Promise<NoteWithRelations | null> {
         const note = await prisma.note.findUnique({
             where: { id: noteId },
-            include: {
-                user: { select: { id: true, username: true } },
-                noteTags: { include: { tag: true } },
-                mood: true,
-            },
+            include: noteInclude,
         });
         if (!note) return null;
         const isOwner = note.userId === userId;
@@ -166,9 +111,9 @@ export class NotesRepository {
         return note;
     }
 
-    async updateNote(noteId: string, input: Partial<UpdateNoteRequest>): Promise<Note> {
+    async updateNote(noteId: string, input: Partial<UpdateNoteRequest>): Promise<NoteWithRelations> {
         return await prisma.$transaction(async (tx) => {
-            const updateData: any = {};
+            const updateData: Prisma.NoteUpdateInput = {};
             if (input.title !== undefined) updateData.title = input.title;
             if (input.content !== undefined) updateData.content = input.content;
             if (input.isPublic !== undefined) updateData.isPublic = input.isPublic;
@@ -178,44 +123,20 @@ export class NotesRepository {
             if (input.tags !== undefined) {
                 await tx.noteTag.deleteMany({ where: { noteId } });
                 if (input.tags.length > 0) {
-                    const uniqueNames = [...new Set(input.tags)].slice(0, 10);
-                    const existing = await tx.tag.findMany({
-                        where: { name: { in: uniqueNames } },
-                    });
-                    const existingNames = new Set(existing.map((t) => t.name));
-                    const toCreate = uniqueNames.filter((n) => !existingNames.has(n));
-                    if (toCreate.length > 0) {
-                        await tx.tag.createMany({
-                            data: toCreate.map((name) => ({ name })),
-                            skipDuplicates: true,
-                        });
-                    }
-                    const tags = await tx.tag.findMany({ where: { name: { in: uniqueNames } } });
-                    if (tags.length > 0) {
-                        await tx.noteTag.createMany({
-                            data: tags.map((t) => ({ noteId, tagId: t.id })),
-                            skipDuplicates: true,
-                        });
-                    }
+                    await this.replaceTags(tx, noteId, input.tags);
                 }
             }
 
             if (input.mood !== undefined) {
                 await tx.mood.deleteMany({ where: { noteId } });
-                if (input.mood) {
-                    await tx.mood.create({
-                        data: { userId: note.userId, noteId, value: input.mood },
-                    });
-                }
+                await tx.mood.create({
+                    data: { userId: note.userId, noteId, value: input.mood },
+                });
             }
 
             return await tx.note.findUniqueOrThrow({
                 where: { id: noteId },
-                include: {
-                    user: { select: { id: true, username: true } },
-                    noteTags: { include: { tag: true } },
-                    mood: true,
-                },
+                include: noteInclude,
             });
         });
     }
@@ -232,20 +153,40 @@ export class NotesRepository {
         return note ? note.userId === userId : false;
     }
 
-    async getById(noteId: string): Promise<Note | null> {
+    async getById(noteId: string): Promise<NoteWithRelations | null> {
         return await prisma.note.findUnique({
             where: { id: noteId },
-            include: {
-                user: { select: { id: true, username: true } },
-                noteTags: { include: { tag: true } },
-                mood: true,
-            },
+            include: noteInclude,
         });
     }
 
-    async getCommentById(commentId: string): Promise<Comment | null> {
-        return await prisma.comment.findUnique({
-            where: { id: commentId },
+    private async replaceTags(tx: Prisma.TransactionClient, noteId: string, tagNames: string[],): Promise<void> {
+        const uniqueNames = [...new Set(tagNames)].slice(0, 10);
+
+        if (uniqueNames.length === 0) {
+            return;
+        }
+
+        const tags = await this.getOrCreateTags(tx, uniqueNames);
+
+        await tx.noteTag.createMany({
+            data: tags.map((tag) => ({ noteId, tagId: tag.id })),
+            skipDuplicates: true,
         });
+    }
+
+    private async getOrCreateTags(tx: Prisma.TransactionClient, tagNames: string[],): Promise<Tag[]> {
+        const existing = await tx.tag.findMany({ where: { name: { in: tagNames } } });
+        const existingNames = new Set(existing.map((tag) => tag.name));
+
+        const toCreate = tagNames.filter((name) => !existingNames.has(name));
+        if (toCreate.length > 0) {
+            await tx.tag.createMany({ 
+                data: toCreate.map((name) => ({ name })), 
+                skipDuplicates: true, 
+            });
+        }
+
+        return await tx.tag.findMany({ where: { name: { in: tagNames } } });
     }
 }
