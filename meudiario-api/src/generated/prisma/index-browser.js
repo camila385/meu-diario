@@ -164,11 +164,29 @@ exports.Prisma.MoodScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.LevelScalarFieldEnum = {
+  id: 'id',
+  level: 'level',
+  name: 'name',
+  minimumPoints: 'minimumPoints'
+};
+
+exports.Prisma.ChallengeScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  description: 'description',
+  rewardPoints: 'rewardPoints',
+  kind: 'kind',
+  target: 'target'
+};
+
 exports.Prisma.BadgeScalarFieldEnum = {
   id: 'id',
+  code: 'code',
   name: 'name',
   description: 'description',
-  criteria: 'criteria'
+  kind: 'kind',
+  threshold: 'threshold'
 };
 
 exports.Prisma.UserBadgeScalarFieldEnum = {
@@ -225,6 +243,8 @@ exports.Prisma.ModelName = {
   Tag: 'Tag',
   NoteTag: 'NoteTag',
   Mood: 'Mood',
+  Level: 'Level',
+  Challenge: 'Challenge',
   Badge: 'Badge',
   UserBadge: 'UserBadge',
   Follow: 'Follow',
