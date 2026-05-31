@@ -21,8 +21,8 @@ export class NotesController {
     async listNotes(req: Request, res: Response): Promise<void> {
         const userId = req.userId!;
         const query = req.query as unknown as ListNotesQuery;
-        const { summaries, meta } = await this.notesService.listNotes(userId, query);
-        sendSuccess(res, summaries, 200, meta);
+        const { notes, meta } = await this.notesService.listNotes(userId, query);
+        sendSuccess(res, notes, 200, meta);
     }
 
     async getNoteById(req: Request, res: Response): Promise<void> {

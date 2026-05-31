@@ -6,7 +6,7 @@ import type {
 import { AppError, NotFoundError, ForbiddenError } from '@/errors';
 import type { NotesRepository } from '@/repositories/notes.repository';
 import type { GamificationService } from '@/services/gamification.service';
-import { toNoteDetail, toNoteSummary } from '@/mappers/note.mapper';
+import { toNoteDetail } from '@/mappers/note.mapper';
 
 export class NotesService {
     constructor(
@@ -25,15 +25,13 @@ export class NotesService {
     async listNotes(userId: string, query: ListNotesQuery) {
         const { notes, total } = await this.notesRepository.listNotes(userId, query);
 
-        const summaries = notes.map(toNoteSummary);
-
         const meta = {
             page: query.page,
             limit: query.limit,
             total,
         };
 
-        return { summaries, meta };
+        return { notes, meta };
     }
 
     async getNote(noteId: string, userId: string) {
