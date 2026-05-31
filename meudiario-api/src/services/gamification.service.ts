@@ -4,31 +4,32 @@ import type { NotesRepository } from '@/repositories/notes.repository';
 import type { MoodsRepository } from '@/repositories/moods.repository';
 import type { GamificationRepository } from '@/repositories/gamification.repository';
 import {
-    BADGES,
-    CHALLENGES,
-    getLevelByPoints,
-    getMilestoneSteps,
-    getNextLevel,
-    getProgressPercent,
     type BadgeResponse,
+    type LevelDefinition,
     type GamificationProgressResponse,
     type RankingResponse,
     type WeeklyChallengeResponse,
 } from '@/models/gamification.model';
-import { toBadgeResponse, toWeeklyChallengeResponse } from '@/mappers/gamification.mapper';
-import { addUtcDays, getUtcDayRange, toUtcDayStart } from '@/utils/date';
 import {
-    getChallengeForCurrentWeek,
-    getChallengeProgressPercent,
-    getCurrentIsoWeekRange,
-    getProgressSummary,
-} from '@/utils/gamification';
+    toBadgeResponse,
+    toWeeklyChallengeResponse,
+} from '@/mappers/gamification.mapper';
+import { addUtcDays, getUtcDayRange, toUtcDayStart } from '@/utils/date';
+import { getCurrentIsoWeekRange } from '@/utils/gamification';
 import type { CreateNoteRequest } from '@/validators/notes.validator';
 
 const POINTS_PER_NOTE = 10;
 const BONUS_POINTS_PER_MOOD = 5;
 const BONUS_POINTS_PER_TAG = 3;
 const WEEKLY_STREAK_BONUS = 20;
+
+type ChallengeItem = {
+    id: number;
+    description: string;
+    rewardPoints: number;
+    kind: string;
+    target: number;
+};
 
 export class GamificationService {
     constructor(
@@ -37,17 +38,84 @@ export class GamificationService {
         private readonly moodsRepository: MoodsRepository,
     ) {}
 
-    private getLevel(points: number) {
-        return getLevelByPoints(points);
+    private getLevel(levels: LevelDefinition[], points: number): LevelDefinition {
+        const sorted = [...levels].sort((left, right) => right.minimumPoints - left.minimumPoints);
+        return sorted.find((level) => points >= level.minimumPoints) ?? levels[0];
     }
 
     private async ensureGamification(userId: string) {
         return this.gamificationRepository.upsertForUser(userId);
     }
 
+    private getNextLevel(levels: LevelDefinition[], currentLevel: number): LevelDefinition | null {
+        return levels.find((level) => level.level === currentLevel + 1) ?? null;
+    }
+
+    private getProgressPercent(levels: LevelDefinition[], points: number, currentLevel: number): number {
+        const current = levels.find((level) => level.level === currentLevel) ?? levels[0];
+        const next = this.getNextLevel(levels, currentLevel);
+
+        if (!next) {
+            return 100;
+        }
+
+        const range = next.minimumPoints - current.minimumPoints;
+        if (range <= 0) {
+            return 100;
+        }
+
+        const earned = points - current.minimumPoints;
+        return Math.max(0, Math.min(100, Number(((earned / range) * 100).toFixed(2))));
+    }
+
+    private getMilestoneSteps(streak: number): {
+        next7: number;
+        next14: number;
+        next30: number;
+        next60: number;
+        next100: number;
+    } {
+        return {
+            next7: Math.max(0, 7 - streak),
+            next14: Math.max(0, 14 - streak),
+            next30: Math.max(0, 30 - streak),
+            next60: Math.max(0, 60 - streak),
+            next100: Math.max(0, 100 - streak),
+        };
+    }
+
+    private getProgressSummary(levels: LevelDefinition[], points: number, level: number, streak: number): GamificationProgressResponse {
+        return {
+            points,
+            level,
+            streak,
+            nextLevelPoints: this.getNextLevel(levels, level)?.minimumPoints ?? null,
+            progressPercent: this.getProgressPercent(levels, points, level),
+            daysToMilestones: this.getMilestoneSteps(streak),
+        };
+    }
+
+    private getWeeklyChallengeForCurrentWeek(challenges: ChallengeItem[], reference = new Date()): ChallengeItem {
+        const weekNumber = Math.floor((toUtcDayStart(reference).getTime() / 86400000) % 52);
+        return challenges[weekNumber % challenges.length];
+    }
+
+    private getChallengeProgressPercent(current: number, target: number): number {
+        if (target <= 0) {
+            return 100;
+        }
+
+        return Math.max(0, Math.min(100, Number(((current / target) * 100).toFixed(2))));
+    }
+
     async getProgress(userId: string): Promise<GamificationProgressResponse> {
         const gamification = await this.ensureGamification(userId);
-        return getProgressSummary(gamification.points, gamification.level, gamification.streak);
+        const levels = await this.gamificationRepository.findLevels();
+        return this.getProgressSummary(levels.map((level) => ({
+            level: level.level,
+            name: level.name,
+            minimumPoints: level.minimumPoints,
+        })), gamification.points, gamification.level, gamification.streak);
     }
 
     async getBadges(userId: string): Promise<BadgeResponse[]> {
@@ -62,7 +130,16 @@ export class GamificationService {
 
     async getWeeklyChallenge(userId: string): Promise<WeeklyChallengeResponse> {
         await this.ensureGamification(userId);
-        const challenge = getChallengeForCurrentWeek();
+        const challenges = await this.gamificationRepository.findChallenges();
+        const challenge = this.getWeeklyChallengeForCurrentWeek(
+            challenges.map((item) => ({
+                id: item.code,
+                description: item.description,
+                rewardPoints: item.rewardPoints,
+                kind: item.kind,
+                target: item.target,
+            })),
+        );
         const weekRange = getCurrentIsoWeekRange();
 
         let progress = 0;
@@ -116,7 +193,7 @@ export class GamificationService {
             challengeId: challenge.id,
             description: challenge.description,
             rewardPoints: challenge.rewardPoints,
-            progress: getChallengeProgressPercent(progress, challenge.target),
+            progress: this.getChallengeProgressPercent(progress, challenge.target),
             completed,
         });
     }
@@ -149,6 +226,7 @@ export class GamificationService {
 
     async awardForNote(userId: string, input: CreateNoteRequest): Promise<void> {
         const gamification = await this.ensureGamification(userId);
+        const levels = await this.gamificationRepository.findLevels();
         const today = toUtcDayStart();
         const lastActivity = gamification.lastActivity
             ? toUtcDayStart(gamification.lastActivity)
@@ -181,7 +259,14 @@ export class GamificationService {
             streak = 1;
         }
 
-        const level = this.getLevel(points);
+        const level = this.getLevel(
+            levels.map((item) => ({
+                level: item.level,
+                name: item.name,
+                minimumPoints: item.minimumPoints,
+            })),
+            points,
+        );
 
         await this.gamificationRepository.updateUserGamification(userId, {
             points,
@@ -210,16 +295,16 @@ export class GamificationService {
             if (unlockedIds.has(badge.id)) continue;
 
             const shouldUnlock =
-                (badge.id === 'first-note' && notesCount >= 1) ||
-                (badge.id === 'notes-10' && notesCount >= 10) ||
-                (badge.id === 'notes-50' && notesCount >= 50) ||
-                (badge.id === 'notes-100' && notesCount >= 100) ||
-                (badge.id === 'streak-7' && gamification.streak >= 7) ||
-                (badge.id === 'streak-30' && gamification.streak >= 30) ||
-                (badge.id === 'streak-100' && gamification.streak >= 100) ||
-                (badge.id === 'level-5' && gamification.level >= 5) ||
-                (badge.id === 'level-10' && gamification.level >= 10) ||
-                (badge.id === 'mood-7' && moodHistory >= 7);
+                (badge.code === 'first-note' && notesCount >= 1) ||
+                (badge.code === 'notes-10' && notesCount >= 10) ||
+                (badge.code === 'notes-50' && notesCount >= 50) ||
+                (badge.code === 'notes-100' && notesCount >= 100) ||
+                (badge.code === 'streak-7' && gamification.streak >= 7) ||
+                (badge.code === 'streak-30' && gamification.streak >= 30) ||
+                (badge.code === 'streak-100' && gamification.streak >= 100) ||
+                (badge.code === 'level-5' && gamification.level >= 5) ||
+                (badge.code === 'level-10' && gamification.level >= 10) ||
+                (badge.code === 'mood-7' && moodHistory >= 7);
 
             if (shouldUnlock) {
                 await this.gamificationRepository.upsertUserBadge(userId, badge.id);

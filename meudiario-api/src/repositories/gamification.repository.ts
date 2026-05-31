@@ -1,4 +1,4 @@
-import type { Badge, User, UserBadge } from '@/generated/prisma';
+import type { Badge, Challenge, Level, User, UserBadge } from '@/generated/prisma';
 import { prisma } from './prisma.client';
 
 export type RankingRow = {
@@ -62,8 +62,20 @@ export class GamificationRepository {
             );
     }
 
+    findLevels(): Promise<Level[]> {
+        return prisma.level.findMany({ orderBy: { level: 'asc' } });
+    }
+
     findBadges(): Promise<Badge[]> {
-        return prisma.badge.findMany({ orderBy: { name: 'asc' } });
+        return prisma.badge.findMany({ orderBy: { code: 'asc' } });
+    }
+
+    findBadgeByCode(code: string): Promise<Badge | null> {
+        return prisma.badge.findUnique({ where: { code } });
+    }
+
+    findChallenges(): Promise<Challenge[]> {
+        return prisma.challenge.findMany({ orderBy: { code: 'asc' } });
     }
 
     findUserBadges(userId: string): Promise<UserBadge[]> {
