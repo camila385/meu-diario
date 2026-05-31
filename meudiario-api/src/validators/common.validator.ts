@@ -6,13 +6,12 @@ export const paginationSchema = z.object({
 });
 
 export const uuidParamSchema = z.object({
-    id: z.string().uuid('ID inválido.'),
+    id: z.uuid('ID inválido.'),
 });
 
 export const emailSchema = z
-    .string()
-    .trim()
     .email('E-mail inválido.')
+    .trim()
     .transform((value) => value.toLowerCase());
 
 export const passwordSchema = z

@@ -1,4 +1,4 @@
-import type { Note as PrismaNote, Tag as PrismaTag, Mood as PrismaMood } from '@/generated/prisma';
+import type { Note as PrismaNote } from '@/generated/prisma';
 import type { NoteSummary, NoteDetail, Tag, Mood } from '@/models/note.model';
 
 export const computeExcerpt = (content?: string | null): string => {
@@ -16,7 +16,7 @@ export const computeExcerpt = (content?: string | null): string => {
 };
 
 export const toNoteSummary = (
-    note: PrismaNote & { noteTags?: Array<{ tag: Tag }> | undefined },
+    note: PrismaNote & { noteTags?: Array<{ tag: Tag }> | undefined; mood?: Mood | null },
 ): NoteSummary => {
     const tags = note.noteTags?.map((link) => link.tag) ?? [];
     return {
@@ -24,7 +24,7 @@ export const toNoteSummary = (
         title: note.title,
         excerpt: computeExcerpt(note.content),
         tags,
-        mood: undefined,
+        mood: note.mood ?? undefined,
         isPublic: note.isPublic,
         createdAt: note.createdAt,
     };

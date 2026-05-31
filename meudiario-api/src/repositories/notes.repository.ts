@@ -26,7 +26,7 @@ export class NotesRepository {
                 data: {
                     userId,
                     title: input.title,
-                    content: input.content || null,
+                    content: input.content ?? null,
                     isPublic: input.isPublic ?? false,
                 },
             });
@@ -46,10 +46,7 @@ export class NotesRepository {
         });
     }
 
-    async listNotes(
-        userId: string,
-        query: ListNotesQuery,
-    ): Promise<{ notes: NoteWithRelations[]; total: number }> {
+    async listNotes(userId: string, query: ListNotesQuery): Promise<{ notes: NoteWithRelations[]; total: number }> {
         const where: Prisma.NoteWhereInput = {
             userId,
             ...(query.tag && {
@@ -105,6 +102,7 @@ export class NotesRepository {
             where: { id: noteId },
             include: noteInclude,
         });
+        
         if (!note) return null;
         const isOwner = note.userId === userId;
         if (!isOwner && !note.isPublic) return null;

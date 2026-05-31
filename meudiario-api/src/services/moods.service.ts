@@ -21,8 +21,8 @@ export class MoodsService {
 
     async createMood(userId: string, input: CreateMoodRequest): Promise<MoodResponse> {
         const today = toUtcDayStart();
-        const existingMood = await this.moodsRepository.findByUserAndDate(userId, today);
 
+        // Note-linked mood: create a new mood for the note
         if (input.noteId) {
             const noteOwner = await this.moodsRepository.findNoteOwner(input.noteId);
 
@@ -32,25 +32,25 @@ export class MoodsService {
 
             if (noteOwner.userId !== userId) {
                 throw new ForbiddenError(
-                    'Acesso negado. Apenas o proprietário pode vincular esta anotação.',
+                    'Acesso negado. Apenas o proprietário pode vincular desta anotação.',
                 );
             }
 
             const noteMood = await this.moodsRepository.findByNoteId(input.noteId);
 
-            if (noteMood && noteMood.id !== existingMood?.id) {
-                throw new ConflictError('A anotação já possui um humor vinculado.');
+            if (noteMood) {
+                throw new ConflictError('Esta anotação já possui um humor vinculado.');
             }
+
+            return toMoodResponse(
+                await this.moodsRepository.createNoteMood(userId, input.noteId, input.value),
+            );
         }
 
-        const mood = await this.moodsRepository.upsertMoodForDate(
-            userId,
-            today,
-            input.value,
-            input.noteId !== undefined ? input.noteId : (existingMood?.noteId ?? null),
+        // Daily mood (without noteId): upsert ensures only one per day
+        return toMoodResponse(
+            await this.moodsRepository.upsertDailyMood(userId, today, input.value),
         );
-
-        return toMoodResponse(mood);
     }
 
     async listHistory(

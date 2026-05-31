@@ -75,6 +75,10 @@ model Mood {
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  // Uniqueness of daily mood (without note) is enforced at service layer:
+  // When noteId IS NULL, only one mood per user per day is allowed.
+  // When noteId IS NOT NULL, multiple moods per day are allowed (one per note).
 }
 
 model Level {

@@ -17,13 +17,29 @@ const moodSelect = {
 } as const;
 
 export class MoodsRepository {
-    findByUserAndDate(userId: string, date: Date): Promise<Mood | null> {
-        return prisma.mood.findUnique({
+    /**
+     * Find the daily mood (without note) for a user on a specific date.
+     * Only searches for moods where noteId IS NULL.
+     */
+    findDailyMoodByDate(userId: string, date: Date): Promise<Mood | null> {
+        return prisma.mood.findFirst({
             where: {
-                userId_date: {
-                    userId,
-                    date,
-                },
+                userId,
+                date,
+                noteId: null,
+            },
+        });
+    }
+
+    /**
+     * Legacy method for backward compatibility.
+     * Searches for any mood (daily or note-linked) on that date.
+     */
+    findByUserAndDate(userId: string, date: Date): Promise<Mood | null> {
+        return prisma.mood.findFirst({
+            where: {
+                userId,
+                date,
             },
         });
     }
@@ -43,30 +59,67 @@ export class MoodsRepository {
         });
     }
 
-    upsertMoodForDate(
+    /**
+     * Upsert a daily mood (without note) for a user on a specific date.
+     * Only updates moods where noteId IS NULL to maintain daily uniqueness.
+     */
+    async upsertDailyMood(
+        userId: string,
+        date: Date,
+        value: number,
+    ): Promise<Mood> {
+        const existing = await this.findDailyMoodByDate(userId, date);
+
+        if (existing) {
+            return prisma.mood.update({
+                where: { id: existing.id },
+                data: { value },
+            });
+        }
+
+        return prisma.mood.create({
+            data: {
+                userId,
+                date,
+                value,
+                noteId: null,
+            },
+        });
+    }
+
+    /**
+     * Create a mood linked to a note.
+     * Multiple note-moods can exist per day (one per note).
+     */
+    async createNoteMood(
+        userId: string,
+        noteId: string,
+        value: number,
+    ): Promise<Mood> {
+        return prisma.mood.create({
+            data: {
+                userId,
+                noteId,
+                value,
+            },
+        });
+    }
+
+    /**
+     * Legacy method for backward compatibility.
+     * Attempts upsert for daily mood; falls back to create if logic changes.
+     */
+    async upsertMoodForDate(
         userId: string,
         date: Date,
         value: number,
         noteId?: string | null,
     ): Promise<Mood> {
-        return prisma.mood.upsert({
-            where: {
-                userId_date: {
-                    userId,
-                    date,
-                },
-            },
-            create: {
-                userId,
-                date,
-                value,
-                noteId: noteId ?? null,
-            },
-            update: {
-                value,
-                ...(noteId !== undefined ? { noteId } : {}),
-            },
-        });
+        if (noteId) {
+            return this.createNoteMood(userId, noteId, value);
+        }
+
+        return this.upsertDailyMood(userId, date, value);
     }
 
     async listHistory(

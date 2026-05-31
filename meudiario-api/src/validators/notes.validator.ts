@@ -28,13 +28,27 @@ export const updateNoteSchema = z.object({
 
 export type UpdateNoteRequest = z.infer<typeof updateNoteSchema>;
 
-export const listNotesQuerySchema = paginationSchema.extend({
-    tag: z.string().trim().optional(),
-    mood: z.coerce.number().int().min(1).max(5).optional(),
-    search: z.string().trim().optional(),
-    dateFrom: z.string().datetime().optional(),
-    dateTo: z.string().datetime().optional(),
-});
+export const listNotesQuerySchema = paginationSchema
+    .extend({
+        tag: z.string().trim().optional(),
+        mood: z.coerce.number().int().min(1).max(5).optional(),
+        search: z.string().trim().optional(),
+        dateFrom: z.iso.datetime().optional(),
+        dateTo: z.iso.datetime().optional(),
+    })
+    .refine(
+        (query) => {
+            if (!query.dateFrom || !query.dateTo) {
+                return true;
+            }
+
+            return new Date(query.dateFrom) <= new Date(query.dateTo);
+        },
+        {
+            message: 'A data inicial não pode ser maior que a data final.',
+            path: ['dateFrom'],
+        },
+    );
 
 export type ListNotesQuery = z.infer<typeof listNotesQuerySchema>;
 

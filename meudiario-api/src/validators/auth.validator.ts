@@ -20,7 +20,7 @@ export const loginSchema = z.object({
 });
 
 export const authParamsSchema = z.object({
-    id: z.string().uuid('ID inválido.'),
+    id: z.uuid('ID inválido.'),
 });
 
 export type RegisterDTO = z.infer<typeof registerSchema>;

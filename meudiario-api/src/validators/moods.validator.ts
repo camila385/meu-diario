@@ -9,14 +9,14 @@ export const moodValueSchema = z.coerce
 
 export const createMoodSchema = z.object({
     value: moodValueSchema,
-    noteId: z.string().uuid('ID da anotação inválido.').optional(),
+    noteId: z.uuid('ID da anotação inválido.').optional(),
 });
 
 export type CreateMoodRequest = z.infer<typeof createMoodSchema>;
 
 export const moodHistoryQuerySchema = paginationSchema.extend({
-    dateFrom: z.string().datetime().optional(),
-    dateTo: z.string().datetime().optional(),
+    dateFrom: z.iso.datetime().optional(),
+    dateTo: z.iso.datetime().optional(),
 });
 
 export type MoodHistoryQuery = z.infer<typeof moodHistoryQuerySchema>;
