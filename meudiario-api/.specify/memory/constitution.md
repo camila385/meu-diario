@@ -835,6 +835,19 @@ export function toNoteDetail(note: Note): NoteResponse {
 
 **Benefício:** Evita mistura de responsabilidades, facilita a manutenção das respostas e mantém a camada de model estritamente tipada.
 
+### P-21 — Um repository por entidade
+
+- Cada entidade do domínio tem seu próprio repository, responsável exclusivamente por operações de banco daquela entidade.
+- Um repository NUNCA acessa ou manipula uma entidade que não é a sua, mesmo que exista relacionamento entre elas.
+- Exemplos de fronteira correta:
+  - `NotesRepository` -> apenas `Note`, `NoteTag`, `Tag`.
+  - `CommentsRepository` -> apenas `Comment` e `CommentLike`.
+  - `MoodsRepository` -> apenas `Mood`.
+  - `UsersRepository` -> apenas `User` (inclui campos de gamificação no `User`).
+  - `SocialRepository` -> apenas `Follow` e `Like` (relações sociais sobre `Note`).
+- Quando um service precisa de dados de múltiplas entidades, ele orquestra chamadas a múltiplos repositories, sem um repository invadir o outro.
+- Tags são exceção tratada como parte do agregado `Note`: a criação/vínculo de tags pode ocorrer dentro do `NotesRepository` por serem parte da transação de criação da nota.
+
 ---
 
 #### P-17 — Swagger: Formatação de anotações OpenAPI
