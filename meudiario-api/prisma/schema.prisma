@@ -17,7 +17,6 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Gamification fields moved to User
   points       Int      @default(0)
   level        Int      @default(1)
   streak       Int      @default(0)
@@ -86,15 +85,6 @@ model Level {
   level         Int    @unique
   name          String
   minimumPoints Int
-}
-
-model Challenge {
-  id           String @id @default(uuid())
-  code         Int    @unique
-  description  String
-  rewardPoints Int
-  kind         String
-  target       Int
 }
 
 model Badge {

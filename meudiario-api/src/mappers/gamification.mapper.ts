@@ -2,7 +2,6 @@ import type {
     BadgeResponse,
     Gamification,
     GamificationResponse,
-    WeeklyChallengeResponse,
 } from '@/models/gamification.model';
 
 export const toGamificationResponse = (gamification: Gamification): GamificationResponse => {
@@ -26,16 +25,7 @@ export const toBadgeResponse = (
     unlockedAt: unlockedAt ? unlockedAt.toISOString() : null,
 });
 
-export const toWeeklyChallengeResponse = (input: {
-    challengeId: number;
-    description: string;
-    rewardPoints: number;
-    progress: number;
-    completed: boolean;
-}): WeeklyChallengeResponse => input;
-
 export default {
     toGamificationResponse,
     toBadgeResponse,
-    toWeeklyChallengeResponse,
 };

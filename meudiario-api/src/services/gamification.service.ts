@@ -8,28 +8,15 @@ import {
     type LevelDefinition,
     type GamificationProgressResponse,
     type RankingResponse,
-    type WeeklyChallengeResponse,
 } from '@/models/gamification.model';
-import {
-    toBadgeResponse,
-    toWeeklyChallengeResponse,
-} from '@/mappers/gamification.mapper';
-import { addUtcDays, getUtcDayRange, toUtcDayStart } from '@/utils/date';
-import { getCurrentIsoWeekRange } from '@/utils/gamification';
+import { toBadgeResponse } from '@/mappers/gamification.mapper';
+import { toUtcDayStart } from '@/utils/date';
 import type { CreateNoteRequest } from '@/validators/notes.validator';
 
 const POINTS_PER_NOTE = 10;
 const BONUS_POINTS_PER_MOOD = 5;
 const BONUS_POINTS_PER_TAG = 3;
 const WEEKLY_STREAK_BONUS = 20;
-
-type ChallengeItem = {
-    id: number;
-    description: string;
-    rewardPoints: number;
-    kind: string;
-    target: number;
-};
 
 export class GamificationService {
     constructor(
@@ -95,19 +82,6 @@ export class GamificationService {
         };
     }
 
-    private getWeeklyChallengeForCurrentWeek(challenges: ChallengeItem[], reference = new Date()): ChallengeItem {
-        const weekNumber = Math.floor((toUtcDayStart(reference).getTime() / 86400000) % 52);
-        return challenges[weekNumber % challenges.length];
-    }
-
-    private getChallengeProgressPercent(current: number, target: number): number {
-        if (target <= 0) {
-            return 100;
-        }
-
-        return Math.max(0, Math.min(100, Number(((current / target) * 100).toFixed(2))));
-    }
-
     async getProgress(userId: string): Promise<GamificationProgressResponse> {
         const gamification = await this.ensureGamification(userId);
         const levels = await this.gamificationRepository.findLevels();
@@ -126,76 +100,6 @@ export class GamificationService {
         );
 
         return badges.map((badge) => toBadgeResponse(badge, unlockedById.get(badge.id) ?? null));
-    }
-
-    async getWeeklyChallenge(userId: string): Promise<WeeklyChallengeResponse> {
-        await this.ensureGamification(userId);
-        const challenges = await this.gamificationRepository.findChallenges();
-        const challenge = this.getWeeklyChallengeForCurrentWeek(
-            challenges.map((item) => ({
-                id: item.code,
-                description: item.description,
-                rewardPoints: item.rewardPoints,
-                kind: item.kind,
-                target: item.target,
-            })),
-        );
-        const weekRange = getCurrentIsoWeekRange();
-
-        let progress = 0;
-        let completed = false;
-
-        if (challenge.kind === 'notes') {
-            const { total } = await this.notesRepository.listNotes(userId, {
-                page: 1,
-                limit: 100,
-            });
-            progress = Math.min(total, challenge.target);
-            completed = total >= challenge.target;
-        }
-
-        if (challenge.kind === 'moods') {
-            const moods = await this.moodsRepository.listByDateRange(
-                userId,
-                weekRange.start,
-                weekRange.end,
-            );
-            progress = Math.min(moods.length, challenge.target);
-            completed = moods.length >= challenge.target;
-        }
-
-        if (challenge.kind === 'note-tags') {
-            const { notes } = await this.notesRepository.listNotes(userId, { page: 1, limit: 100 });
-            const matching = notes.filter(
-                (note) =>
-                    (note as { noteTags?: Array<unknown> }).noteTags?.length !== undefined &&
-                    ((note as { noteTags?: Array<unknown> }).noteTags?.length ?? 0) >=
-                        challenge.target,
-            );
-            progress = Math.min(matching.length, 1);
-            completed = matching.length > 0;
-        }
-
-        if (challenge.kind === 'note-length') {
-            const { notes } = await this.notesRepository.listNotes(userId, { page: 1, limit: 100 });
-            const matching = notes.filter((note) => (note.content?.length ?? 0) > challenge.target);
-            progress = Math.min(matching.length, 1);
-            completed = matching.length > 0;
-        }
-
-        if (challenge.kind === 'streak') {
-            const gamification = await this.ensureGamification(userId);
-            progress = Math.min(gamification.streak, challenge.target);
-            completed = gamification.streak >= challenge.target;
-        }
-
-        return toWeeklyChallengeResponse({
-            challengeId: challenge.id,
-            description: challenge.description,
-            rewardPoints: challenge.rewardPoints,
-            progress: this.getChallengeProgressPercent(progress, challenge.target),
-            completed,
-        });
     }
 
     async getRanking(userId: string): Promise<RankingResponse> {

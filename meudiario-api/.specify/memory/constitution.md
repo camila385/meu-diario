@@ -848,6 +848,17 @@ export function toNoteDetail(note: Note): NoteResponse {
 - Quando um service precisa de dados de múltiplas entidades, ele orquestra chamadas a múltiplos repositories, sem um repository invadir o outro.
 - Tags são exceção tratada como parte do agregado `Note`: a criação/vínculo de tags pode ocorrer dentro do `NotesRepository` por serem parte da transação de criação da nota.
 
+### P-22 — Tipos nomeados para retornos de repositories
+
+- Repositories não devem expor tipos inline complexos em assinaturas de métodos.
+- Quando um método retornar um objeto composto, o formato deve ser descrito por um type/interface nomeado no módulo apropriado.
+- Preferência de localização:
+  - Tipos de saída do domínio em `src/models/` quando forem reaproveitáveis fora do repository.
+  - Tipos específicos de infraestrutura no próprio arquivo do repository, se o formato não fizer sentido fora dele.
+- A mesma regra vale para parâmetros compostos e helpers internos de service quando a assinatura ficar longa ou frágil.
+- Assinaturas como `Promise<{ ... }>` e casts para `any` em bootstrap de repository devem ser substituídos por tipos nomeados.
+- Objetivo: reduzir duplicação, facilitar leitura e evitar assinaturas longas e frágeis como `Promise<{ ... }>` espalhadas pelo código.
+
 ---
 
 #### P-17 — Swagger: Formatação de anotações OpenAPI

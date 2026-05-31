@@ -1,4 +1,4 @@
-import type { Badge, Challenge, Level, User, UserBadge } from '@/generated/prisma';
+import type { Badge, Level, User, UserBadge } from '@/generated/prisma';
 import { prisma } from './prisma.client';
 
 export type RankingRow = {
@@ -8,10 +8,23 @@ export type RankingRow = {
     level: number;
 };
 
+export type GamificationSnapshot = {
+    id: string;
+    points: number;
+    level: number;
+    streak: number;
+    lastActivity: Date | null;
+};
+
+export type GamificationBootstrapInput = {
+    id: string;
+    email: string;
+    username: string;
+    passwordHash: string;
+};
+
 export class GamificationRepository {
-    async createForUser(
-        userId: string,
-    ): Promise<{ id: string; points: number; level: number; streak: number; lastActivity: Date | null }> {
+    async createForUser(userId: string): Promise<GamificationSnapshot> {
         await prisma.user.update({ where: { id: userId }, data: {} }).catch(() => null);
         const user = await prisma.user.findUnique({ where: { id: userId } });
         return {
@@ -25,31 +38,25 @@ export class GamificationRepository {
 
     findByUserId(
         userId: string,
-    ): Promise<{
-        id: string;
-        points: number;
-        level: number;
-        streak: number;
-        lastActivity: Date | null;
-    } | null> {
+    ): Promise<GamificationSnapshot | null> {
         return prisma.user
             .findUnique({ where: { id: userId } })
             .then((u) =>
                 u
                     ? {
-                          id: u.id,
-                          points: u.points ?? 0,
-                          level: u.level ?? 1,
-                          streak: u.streak ?? 0,
-                          lastActivity: u.lastActivity ?? null,
-                      }
+                        id: u.id,
+                        points: u.points ?? 0,
+                        level: u.level ?? 1,
+                        streak: u.streak ?? 0,
+                        lastActivity: u.lastActivity ?? null,
+                    }
                     : null,
             );
     }
 
     findByIds(
         userIds: string[],
-    ): Promise<Array<{ id: string; points: number; level: number; streak: number }>> {
+    ): Promise<Array<Pick<GamificationSnapshot, 'id' | 'points' | 'level' | 'streak'>>> {
         return prisma.user
             .findMany({ where: { id: { in: userIds } } })
             .then((users) =>
@@ -74,10 +81,6 @@ export class GamificationRepository {
         return prisma.badge.findUnique({ where: { code } });
     }
 
-    findChallenges(): Promise<Challenge[]> {
-        return prisma.challenge.findMany({ orderBy: { code: 'asc' } });
-    }
-
     findUserBadges(userId: string): Promise<UserBadge[]> {
         return prisma.userBadge.findMany({ where: { userId } });
     }
@@ -89,13 +92,16 @@ export class GamificationRepository {
         return prisma.user.update({ where: { id: userId }, data });
     }
 
-    upsertForUser(
-        userId: string,
-    ): Promise<{ id: string; points: number; level: number; streak: number; lastActivity: Date | null }> {
+    upsertForUser(userId: string): Promise<GamificationSnapshot> {
         return prisma.user
             .upsert({
                 where: { id: userId },
-                create: { id: userId, email: '', username: '', passwordHash: '' as any },
+                create: {
+                    id: userId,
+                    email: '',
+                    username: '',
+                    passwordHash: '' as GamificationBootstrapInput['passwordHash'],
+                },
                 update: {},
             })
             .then((u) => ({

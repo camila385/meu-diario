@@ -106,14 +106,6 @@ const badges = [
     },
 ];
 
-const challenges = [
-    { code: 1, description: 'Escreva 5 anotações esta semana', rewardPoints: 50, kind: 'notes', target: 5 },
-    { code: 2, description: 'Registre seu humor todos os dias desta semana', rewardPoints: 40, kind: 'moods', target: 7 },
-    { code: 3, description: 'Escreva uma anotação com pelo menos 3 tags', rewardPoints: 30, kind: 'note-tags', target: 3 },
-    { code: 4, description: 'Escreva uma anotação com mais de 200 caracteres', rewardPoints: 25, kind: 'note-length', target: 200 },
-    { code: 5, description: 'Mantenha um streak de pelo menos 3 dias esta semana', rewardPoints: 35, kind: 'streak', target: 3 },
-];
-
 async function main(): Promise<void> {
     for (const level of levels) {
         await prisma.level.upsert({
@@ -135,14 +127,6 @@ async function main(): Promise<void> {
                 "kind" = EXCLUDED."kind",
                 "threshold" = EXCLUDED."threshold"
         `;
-    }
-
-    for (const challenge of challenges) {
-        await prisma.challenge.upsert({
-            where: { code: challenge.code },
-            update: challenge,
-            create: challenge,
-        });
     }
 }
 

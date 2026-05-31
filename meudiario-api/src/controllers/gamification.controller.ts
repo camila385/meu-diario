@@ -15,11 +15,6 @@ export class GamificationController {
         sendSuccess(res, result);
     }
 
-    async currentChallenge(req: Request, res: Response): Promise<void> {
-        const result = await this.gamificationService.getWeeklyChallenge(req.userId);
-        sendSuccess(res, result);
-    }
-
     async ranking(req: Request, res: Response): Promise<void> {
         const result = await this.gamificationService.getRanking(req.userId);
         sendSuccess(res, result);

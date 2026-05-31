@@ -4,7 +4,6 @@ import { authenticate } from '@/middlewares/auth.middleware';
 import { validate } from '@/middlewares/validate.middleware';
 import {
     gamificationBadgeQuerySchema,
-    gamificationChallengeQuerySchema,
     gamificationProgressQuerySchema,
     gamificationRankingQuerySchema,
 } from '@/validators/gamification.validator';
@@ -43,23 +42,6 @@ router.get('/progress', authenticate, validate(gamificationProgressQuerySchema, 
  */
 router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'query'), (req, res) =>
     gamificationController.badges(req, res),
-);
-
-/**
- * @swagger
- * /api/v1/gamification/challenge/current:
- *   get:
- *     tags:
- *       - Gamification
- *     summary: Get the current weekly challenge
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       '200':
- *         description: Weekly challenge retrieved successfully
- */
-router.get('/challenge/current', authenticate, validate(gamificationChallengeQuerySchema, 'query'), (req, res) => 
-    gamificationController.currentChallenge(req, res),
 );
 
 /**

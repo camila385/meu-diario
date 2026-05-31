@@ -31,14 +31,6 @@ export interface BadgeResponse {
     unlockedAt: string | null;
 }
 
-export interface WeeklyChallengeResponse {
-    challengeId: number;
-    description: string;
-    rewardPoints: number;
-    progress: number;
-    completed: boolean;
-}
-
 export interface RankingItemResponse {
     userId: string;
     username: string;
