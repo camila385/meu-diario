@@ -1,0 +1,1497 @@
+{
+  "info": {
+    "name": "Meu Diario API",
+    "description": "Collection completa da API do Meu Diario.\n\nComo usar:\n1. Execute Auth / User A / Registrar e Auth / User B / Registrar\n2. Tokens e IDs sao capturados automaticamente\n3. Crie notas com User A e User B antes de testar comentarios/curtidas\n4. Execute o fluxo social em Usuarios / Social na ordem indicada\n\nVariaveis de colecao:\n- baseUrl: URL base do servidor\n- userA_token, userA_id: User A\n- userB_token, userB_id: User B\n- userA_noteId: ultima nota criada por User A\n- userB_noteId: ultima nota criada por User B\n- commentId: ultimo comentario criado",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string",
+      "description": "Token do usuario ativo (ultimo login)"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string",
+      "description": "ID do usuario ativo (ultimo login)"
+    },
+    {
+      "key": "userA_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userB_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userA_noteId",
+      "value": "",
+      "type": "string",
+      "description": "ID da ultima nota criada por User A"
+    },
+    {
+      "key": "userB_noteId",
+      "value": "",
+      "type": "string",
+      "description": "ID da ultima nota criada por User B"
+    },
+    {
+      "key": "commentId",
+      "value": "",
+      "type": "string",
+      "description": "ID do ultimo comentario criado"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth",
+      "description": "Registro e login para User A e User B. Execute todos antes de testar as demais pastas.",
+      "item": [
+        {
+          "name": "User A",
+          "item": [
+            {
+              "name": "Registrar User A",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userA_token', json.data.token);",
+                      "    pm.collectionVariables.set('userA_id', json.data.user.id);",
+                      "    pm.collectionVariables.set('token', json.data.token);",
+                      "    pm.collectionVariables.set('userId', json.data.user.id);",
+                      "    console.log('User A registrado. ID:', json.data.user.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"usera@exemplo.com\",\n  \"username\": \"user_a\",\n  \"password\": \"senha12345\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login User A",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userA_token', json.data.token);",
+                      "    pm.collectionVariables.set('userA_id', json.data.user.id);",
+                      "    pm.collectionVariables.set('token', json.data.token);",
+                      "    pm.collectionVariables.set('userId', json.data.user.id);",
+                      "    console.log('User A logado. ID:', json.data.user.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"usera@exemplo.com\",\n  \"password\": \"senha12345\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Perfil de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "me"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User B",
+          "item": [
+            {
+              "name": "Registrar User B",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userB_token', json.data.token);",
+                      "    pm.collectionVariables.set('userB_id', json.data.user.id);",
+                      "    pm.collectionVariables.set('token', json.data.token);",
+                      "    pm.collectionVariables.set('userId', json.data.user.id);",
+                      "    console.log('User B registrado. ID:', json.data.user.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"userb@exemplo.com\",\n  \"username\": \"user_b\",\n  \"password\": \"senha12345\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "register"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Login User B",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userB_token', json.data.token);",
+                      "    pm.collectionVariables.set('userB_id', json.data.user.id);",
+                      "    pm.collectionVariables.set('token', json.data.token);",
+                      "    pm.collectionVariables.set('userId', json.data.user.id);",
+                      "    console.log('User B logado. ID:', json.data.user.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"userb@exemplo.com\",\n  \"password\": \"senha12345\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Perfil de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "auth", "me"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Notas",
+      "description": "CRUD de notas separado por usuario, mais requests de interacao cruzada.",
+      "item": [
+        {
+          "name": "User A",
+          "item": [
+            {
+              "name": "Criar Nota (User A)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userA_noteId', json.data.id);",
+                      "    console.log('Nota de User A criada. userA_noteId:', json.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Nota do User A\",\n  \"content\": \"Reflexoes do User A sobre o dia.\",\n  \"tags\": [\"produtividade\", \"bem-estar\"],\n  \"mood\": 4,\n  \"isPublic\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes"]
+                },
+                "description": "Cria uma nota publica para User A. Salva userA_noteId."
+              },
+              "response": []
+            },
+            {
+              "name": "Listar Notas de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes"],
+                  "query": [
+                    { "key": "tag", "value": "", "disabled": true },
+                    { "key": "mood", "value": "", "disabled": true },
+                    { "key": "search", "value": "", "disabled": true },
+                    { "key": "dateFrom", "value": "2026-01-01T00:00:00.000Z", "disabled": true },
+                    { "key": "dateTo", "value": "2026-12-31T23:59:59.999Z", "disabled": true }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Buscar Nota de User A por ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userA_noteId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Atualizar Nota de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Nota do User A (editada)\",\n  \"content\": \"Conteudo atualizado com mais detalhes.\",\n  \"tags\": [\"reflexao\"],\n  \"mood\": 5,\n  \"isPublic\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userA_noteId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Excluir Nota de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userA_noteId}}"]
+                },
+                "description": "Retorna 204."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User B",
+          "item": [
+            {
+              "name": "Criar Nota (User B)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "if (json.success && json.data) {",
+                      "    pm.collectionVariables.set('userB_noteId', json.data.id);",
+                      "    console.log('Nota de User B criada. userB_noteId:', json.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Nota do User B\",\n  \"content\": \"Pensamentos do User B sobre o dia.\",\n  \"tags\": [\"diario\", \"gratidao\"],\n  \"mood\": 3,\n  \"isPublic\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes"]
+                },
+                "description": "Cria uma nota publica para User B. Salva userB_noteId."
+              },
+              "response": []
+            },
+            {
+              "name": "Listar Notas de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes"],
+                  "query": [
+                    { "key": "tag", "value": "", "disabled": true },
+                    { "key": "mood", "value": "", "disabled": true },
+                    { "key": "search", "value": "", "disabled": true }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Buscar Nota de User B por ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userB_noteId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Atualizar Nota de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Nota do User B (editada)\",\n  \"content\": \"Conteudo atualizado por User B.\",\n  \"tags\": [\"diario\"],\n  \"mood\": 4,\n  \"isPublic\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userB_noteId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Excluir Nota de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userB_noteId}}"]
+                },
+                "description": "Retorna 204."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Interacoes cruzadas",
+          "description": "Requests onde um usuario acessa ou interage com conteudo do outro.",
+          "item": [
+            {
+              "name": "User A ve notas de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/by-user/{{userB_id}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "by-user", "{{userB_id}}"]
+                },
+                "description": "User A visualiza notas de User B. Retorna todas se perfil publico, ou apenas publicas se privado (sem follow)."
+              },
+              "response": []
+            },
+            {
+              "name": "User B ve notas de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/by-user/{{userA_id}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "by-user", "{{userA_id}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User A curte nota de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/like",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userB_noteId}}", "like"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User A remove curtida da nota de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/like",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userB_noteId}}", "like"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User B curte nota de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}/like",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userA_noteId}}", "like"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User B remove curtida da nota de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}/like",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "{{userA_noteId}}", "like"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Feed de User A (notas dos seguidos)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/feed",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "feed"],
+                  "query": [
+                    { "key": "tag", "value": "", "disabled": true },
+                    { "key": "search", "value": "", "disabled": true }
+                  ]
+                },
+                "description": "Deve mostrar notas de User B apos User A seguir User B."
+              },
+              "response": []
+            },
+            {
+              "name": "Feed de User B (notas dos seguidos)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/notes/feed",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "notes", "feed"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Comentarios",
+      "description": "Comentarios cruzados entre os dois usuarios.",
+      "item": [
+        {
+          "name": "User A comenta na nota de User B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.success && json.data) {",
+                  "    pm.collectionVariables.set('commentId', json.data.id);",
+                  "    console.log('Comentario criado. commentId:', json.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Otima nota, User B! Muito bem escrita.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments"]
+            },
+            "description": "Salva commentId automaticamente."
+          },
+          "response": []
+        },
+        {
+          "name": "User B comenta na nota de User A",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Concordo com voce, User A! Reflexao muito pertinente.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userA_noteId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar comentarios da nota de User B",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Listar comentarios da nota de User A",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userA_noteId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userA_noteId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User B curte comentario de User A (na nota de B)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments/{{commentId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments", "{{commentId}}", "like"]
+            },
+            "description": "User B curte o comentario que User A fez na nota de B. commentId = comentario criado por User A."
+          },
+          "response": []
+        },
+        {
+          "name": "User B remove curtida do comentario de User A",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments/{{commentId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments", "{{commentId}}", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User A exclui proprio comentario",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments/{{commentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments", "{{commentId}}"]
+            },
+            "description": "Retorna 204. Apenas o autor do comentario ou da nota pode excluir."
+          },
+          "response": []
+        },
+        {
+          "name": "User B exclui comentario de User A na propria nota",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/notes/{{userB_noteId}}/comments/{{commentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "notes", "{{userB_noteId}}", "comments", "{{commentId}}"]
+            },
+            "description": "Retorna 204. Dono da nota tambem pode remover qualquer comentario nela."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Humor",
+      "description": "Registro e historico de humor para cada usuario.",
+      "item": [
+        {
+          "name": "User A",
+          "item": [
+            {
+              "name": "User A registra humor (simples)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": 4,\n  \"noteId\": null\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"]
+                },
+                "description": "Humor diario de User A sem nota associada."
+              },
+              "response": []
+            },
+            {
+              "name": "User A registra humor vinculado a nota",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": 5,\n  \"noteId\": \"{{userA_noteId}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"]
+                },
+                "description": "Humor de User A associado a propria nota."
+              },
+              "response": []
+            },
+            {
+              "name": "User A ve historico de humor",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"],
+                  "query": [
+                    { "key": "dateFrom", "value": "2026-06-01T00:00:00.000Z", "disabled": true },
+                    { "key": "dateTo", "value": "2026-06-30T23:59:59.999Z", "disabled": true }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User B",
+          "item": [
+            {
+              "name": "User B registra humor (simples)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": 3,\n  \"noteId\": null\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User B registra humor vinculado a nota",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"value\": 2,\n  \"noteId\": \"{{userB_noteId}}\"\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User B ve historico de humor",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/moods",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "moods"],
+                  "query": [
+                    { "key": "dateFrom", "value": "2026-06-01T00:00:00.000Z", "disabled": true },
+                    { "key": "dateTo", "value": "2026-06-30T23:59:59.999Z", "disabled": true }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Gamificacao",
+      "description": "Progresso, conquistas e ranking para cada usuario.",
+      "item": [
+        {
+          "name": "User A",
+          "item": [
+            {
+              "name": "Progresso de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/progress",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "progress"]
+                },
+                "description": "XP, nivel atual, proximo nivel e progresso percentual de User A."
+              },
+              "response": []
+            },
+            {
+              "name": "Conquistas de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/badges",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "badges"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User B",
+          "item": [
+            {
+              "name": "Progresso de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/progress",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "progress"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Conquistas de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/badges",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "badges"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Ranking geral",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/ranking",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "ranking"],
+              "query": [
+                { "key": "limit", "value": "10", "description": "1-50, padrao 50" }
+              ]
+            },
+            "description": "Ranking global. Deve mostrar User A e User B apos ambos terem XP."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Insights",
+      "description": "Estatisticas do diario para cada usuario.",
+      "item": [
+        {
+          "name": "User A",
+          "item": [
+            {
+              "name": "Visao geral de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/overview",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "overview"]
+                },
+                "description": "Total de notas, sequencia atual, maior sequencia, humor medio de User A."
+              },
+              "response": []
+            },
+            {
+              "name": "Calendario de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/calendar",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "calendar"],
+                  "query": [
+                    { "key": "year", "value": "2026" },
+                    { "key": "month", "value": "6" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Distribuicao por dia da semana de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/weekdays",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "weekdays"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "User B",
+          "item": [
+            {
+              "name": "Visao geral de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/overview",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "overview"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Calendario de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/calendar",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "calendar"],
+                  "query": [
+                    { "key": "year", "value": "2026" },
+                    { "key": "month", "value": "6" }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Distribuicao por dia da semana de User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/insights/weekdays",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "insights", "weekdays"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "description": "Perfil, configuracoes de conta e fluxo social.",
+      "item": [
+        {
+          "name": "Perfil",
+          "item": [
+            {
+              "name": "User A — Meu Perfil",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User B — Meu Perfil",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "User A — Atualizar Perfil",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"username\": \"user_a_novo\",\n  \"avatarUrl\": null,\n  \"isPublic\": false\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                },
+                "description": "isPublic: false = perfil privado (follow requer aprovacao)."
+              },
+              "response": []
+            },
+            {
+              "name": "User B — Tornar Perfil Publico",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"isPublic\": true\n}",
+                  "options": { "raw": { "language": "json" } }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me"]
+                },
+                "description": "Com isPublic: true, User A pode seguir User B diretamente sem aprovacao."
+              },
+              "response": []
+            },
+            {
+              "name": "Buscar User B por username",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/username/user_b",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "username", "user_b"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Buscar User B por ID",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userB_id}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "{{userB_id}}"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Social — Fluxo de Follow",
+          "description": "Execute na ordem para testar o fluxo completo.\n\nPre-requisito: User A e User B registrados.\n\nFluxo (perfil privado):\n  1. User A segue User B\n  2. User B verifica pendentes\n  3a. User B aceita OU 3b. User B rejeita\n  4. User A verifica following\n  5. User B verifica followers\n  6. User A deixa de seguir\n\nFluxo rapido (perfil publico):\n  Execute 'User B — Tornar Perfil Publico' antes.\n  Passo 1 ja cria o follow direto, pular passos 2 e 3.",
+          "item": [
+            {
+              "name": "1. User A segue User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userB_id}}/follow",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "{{userB_id}}", "follow"]
+                },
+                "description": "Se User B for publico: follow imediato. Se privado: cria solicitacao pendente."
+              },
+              "response": []
+            },
+            {
+              "name": "2. User B verifica solicitacoes pendentes",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/requests",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "requests"]
+                },
+                "description": "User A deve aparecer na lista."
+              },
+              "response": []
+            },
+            {
+              "name": "3a. User B aceita solicitacao de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/requests/{{userA_id}}/accept",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "requests", "{{userA_id}}", "accept"]
+                },
+                "description": "Retorna 204. User A passa a seguir User B oficialmente."
+              },
+              "response": []
+            },
+            {
+              "name": "3b. User B rejeita solicitacao de User A",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/requests/{{userA_id}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "requests", "{{userA_id}}"]
+                },
+                "description": "Alternativa ao passo 3a. Retorna 204."
+              },
+              "response": []
+            },
+            {
+              "name": "4. User A verifica quem esta seguindo",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/following",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "following"]
+                },
+                "description": "User B deve aparecer apos o passo 3a."
+              },
+              "response": []
+            },
+            {
+              "name": "5. User B verifica seus seguidores",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userB_token}}", "type": "string" }]
+                },
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me/followers",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "me", "followers"]
+                },
+                "description": "User A deve aparecer apos o passo 3a."
+              },
+              "response": []
+            },
+            {
+              "name": "6. User A deixa de seguir User B",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [{ "key": "token", "value": "{{userA_token}}", "type": "string" }]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/{{userB_id}}/follow",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "users", "{{userB_id}}", "follow"]
+                },
+                "description": "Retorna 204."
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
