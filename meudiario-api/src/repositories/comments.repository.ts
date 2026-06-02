@@ -5,8 +5,8 @@ type CommentWithUser = Comment & {
     user: Pick<User, 'id' | 'username' | 'avatarUrl'>;
 };
 
-type CommentWithUserCount = CommentWithUser & {
-    _count?: { likes?: number };
+export type CommentWithUserCount = CommentWithUser & {
+    _count: { likes: number };
 };
 
 export class CommentsRepository {
@@ -27,39 +27,19 @@ export class CommentsRepository {
         });
     }
 
-    async getComments(
-        noteId: string,
-        page: number,
-        limit: number,
-    ): Promise<{
-        comments: CommentWithUserCount[];
-        total: number;
-    }> {
-        const skip = (page - 1) * limit;
-
-        const [comments, total] = await Promise.all([
-            prisma.comment.findMany({
-                where: { noteId },
-                include: {
-                    user: { select: { id: true, username: true, avatarUrl: true } },
-                    _count: { select: { likes: true } },
-                },
-                orderBy: { createdAt: 'asc' },
-                take: limit,
-                skip,
-            }),
-            prisma.comment.count({ where: { noteId } }),
-        ]);
-
-        return { comments, total };
+    getComments(noteId: string): Promise<CommentWithUserCount[]> {
+        return prisma.comment.findMany({
+            where: { noteId },
+            include: {
+                user: { select: { id: true, username: true, avatarUrl: true } },
+                _count: { select: { likes: true } },
+            },
+            orderBy: { createdAt: 'asc' },
+        });
     }
 
     async deleteComment(commentId: string): Promise<Comment> {
         return prisma.comment.delete({ where: { id: commentId } });
-    }
-
-    async getCommentCount(noteId: string): Promise<number> {
-        return prisma.comment.count({ where: { noteId } });
     }
 
     async upsertCommentLike(userId: string, commentId: string): Promise<CommentLike> {
@@ -87,8 +67,11 @@ export class CommentsRepository {
         return !!like;
     }
 
-    async getCommentEngagement(noteId: string): Promise<{ commentCount: number }> {
-        const commentCount = await this.getCommentCount(noteId);
-        return { commentCount };
+    async getUserLikedCommentIds(userId: string, commentIds: string[]): Promise<Set<string>> {
+        const likes = await prisma.commentLike.findMany({
+            where: { userId, commentId: { in: commentIds } },
+            select: { commentId: true },
+        });
+        return new Set(likes.map((l) => l.commentId));
     }
 }
