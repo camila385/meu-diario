@@ -4,8 +4,8 @@ import { UnauthorizedError } from '@/errors/UnauthorizedError';
 import { comparePassword, hashPassword } from '@/utils/hash';
 import { signToken } from '@/utils/jwt';
 import type { UsersRepository } from '@/repositories/users.repository';
-import { toProfileResponse } from '@/mappers/user.mapper';
-import type { AuthResponse, UserProfileResponse } from '@/models/user.model';
+import { toUserResponse } from '@/mappers/users.mapper';
+import type { AuthResponse, UserResponse } from '@/models/users.model';
 import type { LoginDTO, RegisterDTO } from '@/validators/auth.validator';
 
 export class AuthService {
@@ -31,14 +31,14 @@ export class AuthService {
 
         return {
             token: signToken({ userId: createdUser.id }),
-            user: toProfileResponse(createdUser),
+            user: toUserResponse(createdUser),
         };
     }
 
     async login(input: LoginDTO): Promise<AuthResponse> {
         const user = await this.usersRepository.findByEmail(input.email);
 
-        if (!user) {
+        if (!user || !user.isActive) {
             throw new UnauthorizedError('E-mail ou senha inválidos.');
         }
 
@@ -50,17 +50,17 @@ export class AuthService {
 
         return {
             token: signToken({ userId: user.id }),
-            user: toProfileResponse(user),
+            user: toUserResponse(user),
         };
     }
 
-    async getProfile(userId: string): Promise<UserProfileResponse> {
+    async getProfile(userId: string): Promise<UserResponse> {
         const user = await this.usersRepository.findById(userId);
 
-        if (!user) {
+        if (!user || !user.isActive) {
             throw new NotFoundError('Usuário não encontrado.');
         }
 
-        return toProfileResponse(user);
+        return toUserResponse(user);
     }
 }

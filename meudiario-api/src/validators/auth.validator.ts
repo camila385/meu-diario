@@ -19,10 +19,5 @@ export const loginSchema = z.object({
     password: passwordSchema,
 });
 
-export const authParamsSchema = z.object({
-    id: z.uuid('ID inválido.'),
-});
-
 export type RegisterDTO = z.infer<typeof registerSchema>;
 export type LoginDTO = z.infer<typeof loginSchema>;
-export type AuthParamsDTO = z.infer<typeof authParamsSchema>;
