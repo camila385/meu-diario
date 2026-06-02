@@ -22,6 +22,11 @@ export const validate = (schema: ZodType, source: 'body' | 'query' | 'params' = 
             return;
         }
 
-        req[source] = result.data;
+        Object.defineProperty(req, source, {
+            value: result.data,
+            writable: true,
+            configurable: true,
+            enumerable: true,
+        });
         next();
     };
