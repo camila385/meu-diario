@@ -14,6 +14,7 @@ model User {
   passwordHash String
   avatarUrl    String?
   isPublic     Boolean  @default(false)
+  isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -74,10 +75,6 @@ model Mood {
 
   user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   note Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  // Uniqueness of daily mood (without note) is enforced at service layer:
-  // When noteId IS NULL, only one mood per user per day is allowed.
-  // When noteId IS NOT NULL, multiple moods per day are allowed (one per note).
 }
 
 model Level {
@@ -108,10 +105,17 @@ model UserBadge {
   @@id([userId, badgeId])
 }
 
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+}
+
 model Follow {
   followerId  String
   followingId String
-  createdAt   DateTime @default(now())
+  status      FollowStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   follower  User @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
   following User @relation("following", fields: [followingId], references: [id], onDelete: Cascade)

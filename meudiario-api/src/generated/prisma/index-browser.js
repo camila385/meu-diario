@@ -127,6 +127,7 @@ exports.Prisma.UserScalarFieldEnum = {
   passwordHash: 'passwordHash',
   avatarUrl: 'avatarUrl',
   isPublic: 'isPublic',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   points: 'points',
@@ -171,15 +172,6 @@ exports.Prisma.LevelScalarFieldEnum = {
   minimumPoints: 'minimumPoints'
 };
 
-exports.Prisma.ChallengeScalarFieldEnum = {
-  id: 'id',
-  code: 'code',
-  description: 'description',
-  rewardPoints: 'rewardPoints',
-  kind: 'kind',
-  target: 'target'
-};
-
 exports.Prisma.BadgeScalarFieldEnum = {
   id: 'id',
   code: 'code',
@@ -198,7 +190,9 @@ exports.Prisma.UserBadgeScalarFieldEnum = {
 exports.Prisma.FollowScalarFieldEnum = {
   followerId: 'followerId',
   followingId: 'followingId',
-  createdAt: 'createdAt'
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.LikeScalarFieldEnum = {
@@ -235,7 +229,10 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
-
+exports.FollowStatus = exports.$Enums.FollowStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED'
+};
 
 exports.Prisma.ModelName = {
   User: 'User',
@@ -244,7 +241,6 @@ exports.Prisma.ModelName = {
   NoteTag: 'NoteTag',
   Mood: 'Mood',
   Level: 'Level',
-  Challenge: 'Challenge',
   Badge: 'Badge',
   UserBadge: 'UserBadge',
   Follow: 'Follow',
