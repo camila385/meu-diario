@@ -1,16 +1,28 @@
-import type {
-    CreateNoteRequest,
-    UpdateNoteRequest,
-    ListNotesQuery,
-} from '@/validators/notes.validator';
+import type { CreateNoteRequest, UpdateNoteRequest } from '@/validators/notes.validator';
 import type { Note, Tag, Mood } from '@/models/note.model';
-import type { Prisma } from '@/generated/prisma';
+import type { Prisma, User, Like } from '@/generated/prisma';
 import { prisma } from './prisma.client';
+
+type FeedNote = Note & {
+    user: Pick<User, 'id' | 'username' | 'avatarUrl'>;
+    noteTags: Array<{ tag: { name: string } }>;
+    likeCount: number;
+    commentCount: number;
+};
 
 type NoteWithRelations = Note & {
     user: { id: string; username: string };
     noteTags: Array<{ tag: Tag }>;
     mood: Mood | null;
+};
+
+type NoteFilter = {
+    isPublic?: boolean;
+    tag?: string;
+    mood?: number;
+    search?: string;
+    dateFrom?: string;
+    dateTo?: string;
 };
 
 const noteInclude = {
@@ -21,13 +33,13 @@ const noteInclude = {
 
 export class NotesRepository {
     async createNote(userId: string, input: CreateNoteRequest): Promise<NoteWithRelations> {
-        return await prisma.$transaction(async (tx) => {
+        return prisma.$transaction(async (tx) => {
             const note = await tx.note.create({
                 data: {
                     userId,
                     title: input.title,
                     content: input.content ?? null,
-                    isPublic: input.isPublic ?? false,
+                    isPublic: input.isPublic,
                 },
             });
 
@@ -39,78 +51,42 @@ export class NotesRepository {
                 await tx.mood.create({ data: { userId, noteId: note.id, value: input.mood } });
             }
 
-            return await tx.note.findUniqueOrThrow({
-                where: { id: note.id },
-                include: noteInclude,
-            });
+            return tx.note.findUniqueOrThrow({ where: { id: note.id }, include: noteInclude });
         });
     }
 
-    async listNotes(userId: string, query: ListNotesQuery): Promise<{ notes: NoteWithRelations[]; total: number }> {
+    findMany(userId: string, filters: NoteFilter = {}): Promise<NoteWithRelations[]> {
         const where: Prisma.NoteWhereInput = {
             userId,
-            ...(query.tag && {
-                noteTags: { some: { tag: { name: query.tag } } },
-            }),
-            ...(query.mood && { mood: { value: query.mood } }),
-            ...(query.search && {
+            ...(filters.isPublic !== undefined && { isPublic: filters.isPublic }),
+            ...(filters.tag && { noteTags: { some: { tag: { name: filters.tag } } } }),
+            ...(filters.mood && { mood: { value: filters.mood } }),
+            ...(filters.search && {
                 OR: [
-                    { title: { contains: query.search, mode: 'insensitive' as const } },
-                    { content: { contains: query.search, mode: 'insensitive' as const } },
+                    { title: { contains: filters.search, mode: 'insensitive' as const } },
+                    { content: { contains: filters.search, mode: 'insensitive' as const } },
                 ],
             }),
-            ...(query.dateFrom &&
-                query.dateTo && {
-                createdAt: { gte: new Date(query.dateFrom), lte: new Date(query.dateTo) },
+            ...(filters.dateFrom && filters.dateTo && {
+                createdAt: { gte: new Date(filters.dateFrom), lte: new Date(filters.dateTo) },
             }),
-            ...(query.dateFrom &&
-                !query.dateTo && {
-                createdAt: { gte: new Date(query.dateFrom) },
-            }),
-            ...(!query.dateFrom &&
-                query.dateTo && {
-                createdAt: { lte: new Date(query.dateTo) },
-            }),
+            ...(filters.dateFrom && !filters.dateTo && { createdAt: { gte: new Date(filters.dateFrom) } }),
+            ...(!filters.dateFrom && filters.dateTo && { createdAt: { lte: new Date(filters.dateTo) } }),
         };
 
-        const total = await prisma.note.count({ where });
-        const skip = (query.page - 1) * query.limit;
-        const notes = await prisma.note.findMany({
-            where,
-            select: {
-                id: true,
-                userId: true,
-                title: true,
-                content: true,
-                isPublic: true,
-                createdAt: true,
-                updatedAt: true,
-                noteTags: { include: { tag: true } },
-                mood: true,
-                user: { select: { id: true, username: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-            skip,
-            take: query.limit,
-        });
-
-        return { notes, total };
+        return prisma.note.findMany({ where, include: noteInclude, orderBy: { createdAt: 'desc' } });
     }
 
-    async getNoteById(noteId: string, userId: string): Promise<NoteWithRelations | null> {
-        const note = await prisma.note.findUnique({
-            where: { id: noteId },
-            include: noteInclude,
-        });
-        
-        if (!note) return null;
-        const isOwner = note.userId === userId;
-        if (!isOwner && !note.isPublic) return null;
-        return note;
+    countNotes(userId: string): Promise<number> {
+        return prisma.note.count({ where: { userId } });
+    }
+
+    findById(noteId: string): Promise<NoteWithRelations | null> {
+        return prisma.note.findUnique({ where: { id: noteId }, include: noteInclude });
     }
 
     async updateNote(noteId: string, input: Partial<UpdateNoteRequest>): Promise<NoteWithRelations> {
-        return await prisma.$transaction(async (tx) => {
+        return prisma.$transaction(async (tx) => {
             const updateData: Prisma.NoteUpdateInput = {};
             if (input.title !== undefined) updateData.title = input.title;
             if (input.content !== undefined) updateData.content = input.content;
@@ -127,64 +103,78 @@ export class NotesRepository {
 
             if (input.mood !== undefined) {
                 await tx.mood.deleteMany({ where: { noteId } });
-                await tx.mood.create({
-                    data: { userId: note.userId, noteId, value: input.mood },
-                });
+                await tx.mood.create({ data: { userId: note.userId, noteId, value: input.mood } });
             }
 
-            return await tx.note.findUniqueOrThrow({
-                where: { id: noteId },
-                include: noteInclude,
-            });
+            return tx.note.findUniqueOrThrow({ where: { id: noteId }, include: noteInclude });
         });
     }
 
-    async deleteNote(noteId: string): Promise<void> {
-        await prisma.note.delete({ where: { id: noteId } });
+    deleteNote(noteId: string): Promise<Note> {
+        return prisma.note.delete({ where: { id: noteId } });
     }
 
     async isNoteOwner(noteId: string, userId: string): Promise<boolean> {
-        const note = await prisma.note.findUnique({
-            where: { id: noteId },
-            select: { userId: true },
-        });
-        return note ? note.userId === userId : false;
+        const note = await prisma.note.findUnique({ where: { id: noteId }, select: { userId: true } });
+        return note?.userId === userId;
     }
 
-    async getById(noteId: string): Promise<NoteWithRelations | null> {
-        return await prisma.note.findUnique({
-            where: { id: noteId },
-            include: noteInclude,
+    async findFeedNotes(userId: string, tag?: string): Promise<FeedNote[]> {
+        const where: Prisma.NoteWhereInput = {
+            isPublic: true,
+            user: { is: { isPublic: true, isActive: true } },
+            userId: { not: userId },
+            noteTags: tag ? { some: { tag: { name: tag } } } : undefined,
+        };
+        const rawNotes = await prisma.note.findMany({
+            where,
+            orderBy: { createdAt: 'desc' },
+            include: {
+                user: { select: { id: true, username: true, avatarUrl: true } },
+                noteTags: { include: { tag: { select: { name: true } } } },
+                _count: { select: { likes: true, comments: true } },
+            },
+        });
+        return rawNotes.map(({ _count, ...rest }) => ({
+            ...rest,
+            likeCount: _count.likes,
+            commentCount: _count.comments,
+        }));
+    }
+
+    upsertLike(userId: string, noteId: string): Promise<Like> {
+        return prisma.like.upsert({
+            where: { userId_noteId: { userId, noteId } },
+            create: { userId, noteId },
+            update: {},
         });
     }
 
-    private async replaceTags(tx: Prisma.TransactionClient, noteId: string, tagNames: string[],): Promise<void> {
-        const uniqueNames = [...new Set(tagNames)].slice(0, 10);
+    deleteLike(userId: string, noteId: string): Promise<Like | null> {
+        return prisma.like.delete({ where: { userId_noteId: { userId, noteId } } }).catch(() => null);
+    }
 
-        if (uniqueNames.length === 0) {
-            return;
-        }
+    getLikeCount(noteId: string): Promise<number> {
+        return prisma.like.count({ where: { noteId } });
+    }
 
-        const tags = await this.getOrCreateTags(tx, uniqueNames);
-
+    private async replaceTags(tx: Prisma.TransactionClient, noteId: string, tagNames: string[]): Promise<void> {
+        const tags = await this.getOrCreateTags(tx, [...new Set(tagNames)]);
         await tx.noteTag.createMany({
             data: tags.map((tag) => ({ noteId, tagId: tag.id })),
             skipDuplicates: true,
         });
     }
 
-    private async getOrCreateTags(tx: Prisma.TransactionClient, tagNames: string[],): Promise<Tag[]> {
+    private async getOrCreateTags(tx: Prisma.TransactionClient, tagNames: string[]): Promise<Tag[]> {
         const existing = await tx.tag.findMany({ where: { name: { in: tagNames } } });
-        const existingNames = new Set(existing.map((tag) => tag.name));
-
+        const existingNames = new Set(existing.map((t) => t.name));
         const toCreate = tagNames.filter((name) => !existingNames.has(name));
+
         if (toCreate.length > 0) {
-            await tx.tag.createMany({ 
-                data: toCreate.map((name) => ({ name })), 
-                skipDuplicates: true, 
-            });
+            await tx.tag.createMany({ data: toCreate.map((name) => ({ name })), skipDuplicates: true });
         }
 
-        return await tx.tag.findMany({ where: { name: { in: tagNames } } });
+        return tx.tag.findMany({ where: { name: { in: tagNames } } });
     }
 }

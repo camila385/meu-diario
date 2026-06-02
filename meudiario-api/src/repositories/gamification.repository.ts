@@ -16,69 +16,13 @@ export type GamificationSnapshot = {
     lastActivity: Date | null;
 };
 
-export type GamificationBootstrapInput = {
-    id: string;
-    email: string;
-    username: string;
-    passwordHash: string;
-};
-
 export class GamificationRepository {
-    async createForUser(userId: string): Promise<GamificationSnapshot> {
-        await prisma.user.update({ where: { id: userId }, data: {} }).catch(() => null);
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        return {
-            id: user!.id,
-            points: user!.points ?? 0,
-            level: user!.level ?? 1,
-            streak: user!.streak ?? 0,
-            lastActivity: user!.lastActivity ?? null,
-        };
-    }
-
-    findByUserId(
-        userId: string,
-    ): Promise<GamificationSnapshot | null> {
-        return prisma.user
-            .findUnique({ where: { id: userId } })
-            .then((u) =>
-                u
-                    ? {
-                        id: u.id,
-                        points: u.points ?? 0,
-                        level: u.level ?? 1,
-                        streak: u.streak ?? 0,
-                        lastActivity: u.lastActivity ?? null,
-                    }
-                    : null,
-            );
-    }
-
-    findByIds(
-        userIds: string[],
-    ): Promise<Array<Pick<GamificationSnapshot, 'id' | 'points' | 'level' | 'streak'>>> {
-        return prisma.user
-            .findMany({ where: { id: { in: userIds } } })
-            .then((users) =>
-                users.map((u) => ({
-                    id: u.id,
-                    points: u.points ?? 0,
-                    level: u.level ?? 1,
-                    streak: u.streak ?? 0,
-                })),
-            );
-    }
-
     findLevels(): Promise<Level[]> {
         return prisma.level.findMany({ orderBy: { level: 'asc' } });
     }
 
     findBadges(): Promise<Badge[]> {
         return prisma.badge.findMany({ orderBy: { code: 'asc' } });
-    }
-
-    findBadgeByCode(code: string): Promise<Badge | null> {
-        return prisma.badge.findUnique({ where: { code } });
     }
 
     findUserBadges(userId: string): Promise<UserBadge[]> {
@@ -92,27 +36,6 @@ export class GamificationRepository {
         return prisma.user.update({ where: { id: userId }, data });
     }
 
-    upsertForUser(userId: string): Promise<GamificationSnapshot> {
-        return prisma.user
-            .upsert({
-                where: { id: userId },
-                create: {
-                    id: userId,
-                    email: '',
-                    username: '',
-                    passwordHash: '' as GamificationBootstrapInput['passwordHash'],
-                },
-                update: {},
-            })
-            .then((u) => ({
-                id: u.id,
-                points: u.points ?? 0,
-                level: u.level ?? 1,
-                streak: u.streak ?? 0,
-                lastActivity: u.lastActivity ?? null,
-            }));
-    }
-
     listRanking(userIds: string[]): Promise<RankingRow[]> {
         return prisma.user
             .findMany({
@@ -124,29 +47,10 @@ export class GamificationRepository {
                 users.map((user) => ({
                     userId: user.id,
                     username: user.username,
-                    points: user.points ?? 0,
-                    level: user.level ?? 1,
+                    points: user.points,
+                    level: user.level,
                 })),
             );
-    }
-
-    findMutualFollowIds(userId: string): Promise<string[]> {
-        return prisma.follow
-            .findMany({
-                where: {
-                    OR: [{ followerId: userId }, { followingId: userId }],
-                },
-                select: { followerId: true, followingId: true },
-            })
-            .then((rows) => {
-                const followers = new Set(
-                    rows.filter((row) => row.followingId === userId).map((row) => row.followerId),
-                );
-                const following = new Set(
-                    rows.filter((row) => row.followerId === userId).map((row) => row.followingId),
-                );
-                return [...followers].filter((id) => following.has(id)).slice(0, 50);
-            });
     }
 
     async upsertUserBadge(userId: string, badgeId: string): Promise<UserBadge> {
@@ -155,9 +59,5 @@ export class GamificationRepository {
             create: { userId, badgeId },
             update: {},
         });
-    }
-
-    updateOnNoteCreation(userId: string): Promise<User> {
-        return prisma.user.update({ where: { id: userId }, data: { points: { increment: 10 } } });
     }
 }

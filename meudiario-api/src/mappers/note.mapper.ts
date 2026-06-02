@@ -1,15 +1,11 @@
 import type { Note as PrismaNote } from '@/generated/prisma';
 import type { NoteDetail, Tag, Mood } from '@/models/note.model';
 
-// Note: summaries are the responsibility of the frontend. Keep only detailed mapping here.
-
-export const toNoteDetail = (
-    note: PrismaNote & {
-        user?: { id: string; username: string };
-        noteTags?: Array<{ tag: Tag }> | undefined;
-        mood?: Mood | null;
-    },
-): NoteDetail => {
+export const toNoteDetail = (note: PrismaNote & {
+    user?: { id: string; username: string };
+    noteTags?: Array<{ tag: Tag }> | undefined;
+    mood?: Mood | null;
+}): NoteDetail => {
     const tags = note.noteTags?.map((link) => link.tag) ?? [];
     return {
         id: note.id,

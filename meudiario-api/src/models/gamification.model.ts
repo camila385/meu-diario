@@ -1,7 +1,3 @@
-import type { User as PrismaUser } from '@/generated/prisma';
-
-export type Gamification = Pick<PrismaUser, 'id' | 'points' | 'level' | 'streak' | 'lastActivity'>;
-
 export interface LevelDefinition {
     level: number;
     name: string;
@@ -14,13 +10,6 @@ export interface GamificationProgressResponse {
     streak: number;
     nextLevelPoints: number | null;
     progressPercent: number;
-    daysToMilestones: {
-        next7: number;
-        next14: number;
-        next30: number;
-        next60: number;
-        next100: number;
-    };
 }
 
 export interface BadgeResponse {
@@ -44,10 +33,3 @@ export interface RankingResponse {
     currentUserPosition: number | null;
 }
 
-export interface GamificationResponse {
-    id: string;
-    points: number;
-    level: number;
-    streak: number;
-    lastActivity: Date | null;
-}

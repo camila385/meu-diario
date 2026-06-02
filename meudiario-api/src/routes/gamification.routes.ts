@@ -1,64 +1,27 @@
 import { Router } from 'express';
-import { gamificationController } from '@/composition-root';
+import { gamificationService } from '@/composition-root';
 import { authenticate } from '@/middlewares/auth.middleware';
 import { validate } from '@/middlewares/validate.middleware';
-import {
-    gamificationBadgeQuerySchema,
-    gamificationProgressQuerySchema,
-    gamificationRankingQuerySchema,
-} from '@/validators/gamification.validator';
+import { gamificationRankingQuerySchema } from '@/validators/gamification.validator';
+import type { GamificationRankingQuery } from '@/validators/gamification.validator';
+import { sendSuccess } from '@/utils/response';
 
 const router = Router();
 
-/**
- * @swagger
- * /api/v1/gamification/progress:
- *   get:
- *     tags:
- *       - Gamification
- *     summary: Get authenticated user's gamification progress
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       '200':
- *         description: Gamification progress retrieved successfully
- */
-router.get('/progress', authenticate, validate(gamificationProgressQuerySchema, 'query'), (req, res) => 
-    gamificationController.progress(req, res),
-);
+router.get('/progress', authenticate, async (req, res) => {
+    const result = await gamificationService.getProgress(req.userId!);
+    sendSuccess(res, result);
+});
 
-/**
- * @swagger
- * /api/v1/gamification/badges:
- *   get:
- *     tags:
- *       - Gamification
- *     summary: List gamification badges for authenticated user
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       '200':
- *         description: Badges retrieved successfully
- */
-router.get('/badges', authenticate, validate(gamificationBadgeQuerySchema, 'query'), (req, res) =>
-    gamificationController.badges(req, res),
-);
+router.get('/badges', authenticate, async (req, res) => {
+    const result = await gamificationService.getBadges(req.userId!);
+    sendSuccess(res, result);
+});
 
-/**
- * @swagger
- * /api/v1/gamification/ranking:
- *   get:
- *     tags:
- *       - Gamification
- *     summary: Get points ranking among mutual followers
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       '200':
- *         description: Ranking retrieved successfully
- */
-router.get('/ranking', authenticate, validate(gamificationRankingQuerySchema, 'query'), (req, res) => 
-    gamificationController.ranking(req, res),
-);
+router.get('/ranking', authenticate, validate(gamificationRankingQuerySchema, 'query'), async (req, res) => {
+    const { limit } = req.query as unknown as GamificationRankingQuery;
+    const result = await gamificationService.getRanking(req.userId!, limit);
+    sendSuccess(res, result);
+});
 
 export default router;

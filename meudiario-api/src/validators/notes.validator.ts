@@ -1,57 +1,65 @@
 import { z } from 'zod';
-import {
-    paginationSchema,
-    uuidParamSchema,
-    noteTitleSchema,
-    noteContentSchema,
-    moodValueSchema,
-    tagsArraySchema,
-} from './common.validator';
+
+const titleSchema = z
+    .string()
+    .trim()
+    .min(1, 'O título é obrigatório.')
+    .max(200, 'O título não pode exceder 200 caracteres.');
+
+const contentSchema = z
+    .string()
+    .trim()
+    .max(10000, 'O conteúdo não pode exceder 10.000 caracteres.')
+    .optional()
+    .transform((value) => (value === '' ? undefined : value));
+
+const tagSchema = z
+    .string()
+    .trim()
+    .min(1, 'O nome da tag é obrigatório.')
+    .max(50, 'O nome da tag não pode exceder 50 caracteres.');
+
+const tagsSchema = z
+    .array(tagSchema)
+    .max(10, 'Não é possível associar mais de 10 tags a uma anotação.')
+    .default([]);
+
+const moodSchema = z
+    .number()
+    .int()
+    .min(1, 'O humor deve estar entre 1 e 5.')
+    .max(5, 'O humor deve estar entre 1 e 5.')
+    .optional();
 
 export const createNoteSchema = z.object({
-    title: noteTitleSchema,
-    content: noteContentSchema,
-    tags: tagsArraySchema,
-    mood: moodValueSchema,
+    title: titleSchema,
+    content: contentSchema,
+    tags: tagsSchema,
+    mood: moodSchema,
     isPublic: z.boolean().default(false),
 });
 
-export type CreateNoteRequest = z.infer<typeof createNoteSchema>;
-
 export const updateNoteSchema = z.object({
-    title: noteTitleSchema.optional(),
-    content: noteContentSchema,
-    tags: tagsArraySchema.optional(),
-    mood: moodValueSchema,
+    title: titleSchema.optional(),
+    content: contentSchema,
+    tags: tagsSchema.optional(),
+    mood: moodSchema,
     isPublic: z.boolean().optional(),
 });
 
-export type UpdateNoteRequest = z.infer<typeof updateNoteSchema>;
-
-export const listNotesQuerySchema = paginationSchema
-    .extend({
-        tag: z.string().trim().optional(),
+export const notesQuerySchema = z
+    .object({
+        tag: z.string().trim().min(1).max(50).optional(),
         mood: z.coerce.number().int().min(1).max(5).optional(),
         search: z.string().trim().optional(),
         dateFrom: z.iso.datetime().optional(),
         dateTo: z.iso.datetime().optional(),
     })
     .refine(
-        (query) => {
-            if (!query.dateFrom || !query.dateTo) {
-                return true;
-            }
-
-            return new Date(query.dateFrom) <= new Date(query.dateTo);
-        },
-        {
-            message: 'A data inicial não pode ser maior que a data final.',
-            path: ['dateFrom'],
-        },
+        (query) => !query.dateFrom || !query.dateTo || new Date(query.dateFrom) <= new Date(query.dateTo),
+        { message: 'A data inicial não pode ser maior que a data final.', path: ['dateFrom'] },
     );
 
-export type ListNotesQuery = z.infer<typeof listNotesQuerySchema>;
-
-export const noteIdParamSchema = uuidParamSchema;
-
-export type NoteIdParam = z.infer<typeof noteIdParamSchema>;
+export type CreateNoteRequest = z.infer<typeof createNoteSchema>;
+export type UpdateNoteRequest = z.infer<typeof updateNoteSchema>;
+export type NotesQuery = z.infer<typeof notesQuerySchema>;

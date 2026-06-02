@@ -1,18 +1,4 @@
-import type {
-    BadgeResponse,
-    Gamification,
-    GamificationResponse,
-} from '@/models/gamification.model';
-
-export const toGamificationResponse = (gamification: Gamification): GamificationResponse => {
-    return {
-        id: gamification.id,
-        points: (gamification.points as unknown as number) ?? 0,
-        level: (gamification.level as unknown as number) ?? 1,
-        streak: (gamification.streak as unknown as number) ?? 0,
-        lastActivity: (gamification.lastActivity as unknown as Date) ?? null,
-    };
-};
+import type { BadgeResponse } from '@/models/gamification.model';
 
 export const toBadgeResponse = (
     badge: { id: string; name: string; description: string },
@@ -24,8 +10,3 @@ export const toBadgeResponse = (
     unlocked: Boolean(unlockedAt),
     unlockedAt: unlockedAt ? unlockedAt.toISOString() : null,
 });
-
-export default {
-    toGamificationResponse,
-    toBadgeResponse,
-};
