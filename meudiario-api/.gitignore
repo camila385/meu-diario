@@ -6,6 +6,8 @@ node_modules
 
 .github
 .specify
+.claude
+CLAUDE.md
 /docs
 /specs
 
